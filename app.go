@@ -95,31 +95,79 @@ func (a *App) CheckEnvironment() {
 		}
 
 		a.log("Checking Claude Code...")
-		// Always try to install/update claude-code
-		a.log("Installing/Updating Claude Code (npm install -g @anthropic-ai/claude-code)...")
 		
-		installCmd := exec.Command(npmPath, "install", "-g", "@anthropic-ai/claude-code")
-		installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-		if out, err := installCmd.CombinedOutput(); err != nil {
-			// If npmPath failed, try absolute path just in case
-			if npmPath == "npm" {
-				installCmd = exec.Command(`C:\Program Files\nodejs\npm.cmd`, "install", "-g", "@anthropic-ai/claude-code")
-				installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-				if out2, err2 := installCmd.CombinedOutput(); err2 != nil {
-					a.log("Failed to install Claude Code: " + string(out) + " / " + string(out2))
+		// Check if claude exists first
+		claudeCheckCmd := exec.Command("claude", "--version")
+		claudeCheckCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		claudeExists := claudeCheckCmd.Run() == nil
+
+		if !claudeExists {
+			a.log("Claude Code not found. Installing...")
+			installCmd := exec.Command(npmPath, "install", "-g", "@anthropic-ai/claude-code")
+			installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+			
+			if out, err := installCmd.CombinedOutput(); err != nil {
+				// Fallback to absolute path
+				if npmPath == "npm" {
+					installCmd = exec.Command(`C:\Program Files\nodejs\npm.cmd`, "install", "-g", "@anthropic-ai/claude-code")
+					installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+					if out2, err2 := installCmd.CombinedOutput(); err2 != nil {
+						a.log("Failed to install Claude Code: " + string(out) + " / " + string(out2))
+					} else {
+						a.log("Claude Code installed successfully. Restarting app to apply changes...")
+						a.restartApp()
+						return
+					}
 				} else {
-					a.log("Claude Code updated successfully.")
+					a.log("Failed to install Claude Code: " + string(out))
 				}
 			} else {
-				a.log("Failed to install Claude Code: " + string(out))
+				a.log("Claude Code installed successfully. Restarting app to apply changes...")
+				a.restartApp()
+				return
 			}
 		} else {
-			a.log("Claude Code updated successfully.")
+			// Always try to update claude-code if it exists
+			a.log("Claude Code found. Checking for updates (npm install -g @anthropic-ai/claude-code)...")
+			
+			installCmd := exec.Command(npmPath, "install", "-g", "@anthropic-ai/claude-code")
+			installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+			if out, err := installCmd.CombinedOutput(); err != nil {
+				if npmPath == "npm" {
+					installCmd = exec.Command(`C:\Program Files\nodejs\npm.cmd`, "install", "-g", "@anthropic-ai/claude-code")
+					installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+					if out2, err2 := installCmd.CombinedOutput(); err2 != nil {
+						a.log("Failed to update Claude Code: " + string(out) + " / " + string(out2))
+					} else {
+						a.log("Claude Code updated successfully.")
+					}
+				} else {
+					a.log("Failed to update Claude Code: " + string(out))
+				}
+			} else {
+				a.log("Claude Code updated successfully.")
+			}
 		}
 
 		a.log("Environment check complete.")
 		runtime.EventsEmit(a.ctx, "env-check-done")
 	}()
+}
+
+func (a *App) restartApp() {
+	executable, err := os.Executable()
+	if err != nil {
+		a.log("Failed to get executable path: " + err.Error())
+		return
+	}
+
+	cmd := exec.Command("cmd", "/c", "start", "", executable)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	if err := cmd.Start(); err != nil {
+		a.log("Failed to restart: " + err.Error())
+	} else {
+		runtime.Quit(a.ctx)
+	}
 }
 
 func (a *App) syncToClaudeSettings(config AppConfig) error {
