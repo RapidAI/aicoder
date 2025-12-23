@@ -114,12 +114,12 @@ func (a *App) syncToClaudeSettings(config AppConfig) error {
 		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "kimi-k2-thinking"
 		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "kimi-k2-thinking"
 		env["ANTHROPIC_MODEL"] = "kimi-k2-thinking"
-	case "glm":
+	case "glm", "glm-4.7":
 		env["ANTHROPIC_BASE_URL"] = "https://open.bigmodel.cn/api/anthropic"
-		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "glm-4.5-air"
-		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "glm-4.6"
-		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "glm-4.6"
-		env["ANTHROPIC_MODEL"] = "glm-4.6"
+		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "glm-4.7"
+		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "glm-4.7"
+		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "glm-4.7"
+		env["ANTHROPIC_MODEL"] = "glm-4.7"
 		settings["permissions"] = map[string]string{"defaultMode": "dontAsk"}
 	case "doubao":
 		env["ANTHROPIC_BASE_URL"] = "https://ark.cn-beijing.volces.com/api/coding"
@@ -173,7 +173,7 @@ func getBaseUrl(selectedModel *ModelConfig) string {
 	switch strings.ToLower(selectedModel.ModelName) {
 	case "kimi":
 		baseUrl = "https://api.kimi.com/coding"
-	case "glm":
+	case "glm", "glm-4.7":
 		baseUrl = "https://open.bigmodel.cn/api/anthropic"
 	case "doubao":
 		baseUrl = "https://ark.cn-beijing.volces.com/api/coding"
@@ -206,7 +206,7 @@ func (a *App) LoadConfig() (AppConfig, error) {
 			ProjectDir: home,
 			Models: []ModelConfig{
 				{
-					ModelName: "glm",
+					ModelName: "GLM",
 					ModelUrl:  "https://open.bigmodel.cn/api/anthropic",
 					ApiKey:    "your_glm_api_key_here",
 				},
@@ -255,16 +255,25 @@ func (a *App) LoadConfig() (AppConfig, error) {
 		config.ProjectDir, _ = os.UserHomeDir()
 	}
 
-	// Ensure ModelUrls are populated for existing configs
+	// Ensure ModelUrls are populated and migrate names for existing configs
 	hasCustom := false
 	for i := range config.Models {
+		// Migrate to "GLM" for display
+		lowerName := strings.ToLower(config.Models[i].ModelName)
+		if lowerName == "glm" || lowerName == "glm-4.7" {
+			config.Models[i].ModelName = "GLM"
+			if strings.ToLower(config.CurrentModel) == "glm" || strings.ToLower(config.CurrentModel) == "glm-4.7" {
+				config.CurrentModel = "GLM"
+			}
+		}
+
 		if config.Models[i].IsCustom || config.Models[i].ModelName == "Custom" {
 			hasCustom = true
 			config.Models[i].IsCustom = true
 		}
 		if config.Models[i].ModelUrl == "" {
 			switch strings.ToLower(config.Models[i].ModelName) {
-			case "glm":
+			case "glm", "glm-4.7":
 				config.Models[i].ModelUrl = "https://open.bigmodel.cn/api/anthropic"
 			case "kimi":
 				config.Models[i].ModelUrl = "https://api.kimi.com/coding"

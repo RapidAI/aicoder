@@ -6,6 +6,7 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -37,9 +38,14 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 1},
+		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 0},
 		Bind: []interface{}{
 			app,
+		},
+		Mac: &mac.Options{
+			TitleBar:             mac.TitleBarHidden(),
+			WebviewIsTransparent: true,
+			WindowIsTranslucent:  true,
 		},
 	}
 
