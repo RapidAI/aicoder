@@ -1,7 +1,8 @@
 #!/bin/bash
 ARCH=$(uname -m)
+logger "CCEASY: Checking architecture for arm64 build. System is $ARCH"
 if [ "$ARCH" != "arm64" ]; then
-    echo "Error: This package is for Apple Silicon (arm64) only. Your system is $ARCH."
+    logger "CCEASY ERROR: Architecture mismatch. Expected arm64, got $ARCH"
     exit 1
 fi
 exit 0

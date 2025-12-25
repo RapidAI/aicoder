@@ -1,7 +1,8 @@
 #!/bin/bash
 ARCH=$(uname -m)
+logger "CCEASY: Checking architecture for x86_64 build. System is $ARCH"
 if [ "$ARCH" != "x86_64" ]; then
-    echo "Error: This package is for Intel (x86_64) only. Your system is $ARCH."
+    logger "CCEASY ERROR: Architecture mismatch. Expected x86_64, got $ARCH"
     exit 1
 fi
 exit 0
