@@ -12,7 +12,7 @@ const subscriptionUrls: {[key: string]: string} = {
     "minimax": "https://platform.minimaxi.com/user-center/payment/coding-plan"
 };
 
-const APP_VERSION = "1.2";
+const APP_VERSION = "1.2.2";
 
 const translations: any = {
     "en": {
@@ -52,7 +52,8 @@ const translations: any = {
         "checkUpdate": "Check Update",
         "noUpdate": "No updates available",
         "updateAvailable": "Update available: ",
-        "foundNewVersion": "Found new version"
+        "foundNewVersion": "Found new version",
+        "downloadNow": "Download Now"
     },
     "zh-Hans": {
         "title": "Claude Code Easy Suite",
@@ -91,7 +92,8 @@ const translations: any = {
         "checkUpdate": "检查更新",
         "noUpdate": "无可用更新",
         "updateAvailable": "发现新版本: ",
-        "foundNewVersion": "发现新版本"
+        "foundNewVersion": "发现新版本",
+        "downloadNow": "立即下载"
     },
     "zh-Hant": {
         "title": "Claude Code Easy Suite",
@@ -701,9 +703,6 @@ function App() {
                                     setUpdateResult(result);
                                     setShowUpdateModal(true);
                                     setStatus("");
-                                    if (result.has_update) {
-                                        BrowserOpenURL("https://github.com/RapidAI/cceasy/releases");
-                                    }
                                 }).catch((err: any) => {
                                     setStatus("Error: " + err);
                                 });
@@ -1106,13 +1105,27 @@ function App() {
                                 </div>
                             )}
                         </div>
-                        <button 
-                            className="btn-primary" 
-                            style={{width: '100%'}}
-                            onClick={() => setShowUpdateModal(false)}
-                        >
-                            OK
-                        </button>
+                        <div style={{display: 'flex', gap: '10px'}}>
+                            {updateResult?.has_update && (
+                                <button 
+                                    className="btn-primary" 
+                                    style={{flex: 1}}
+                                    onClick={() => {
+                                        BrowserOpenURL("https://github.com/RapidAI/cceasy/releases");
+                                        setShowUpdateModal(false);
+                                    }}
+                                >
+                                    {t("downloadNow")}
+                                </button>
+                            )}
+                            <button 
+                                className="btn-primary" 
+                                style={{flex: 1, backgroundColor: updateResult?.has_update ? '#6b7280' : '#3b82f6'}}
+                                onClick={() => setShowUpdateModal(false)}
+                            >
+                                {updateResult?.has_update ? t("hide") : "OK"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

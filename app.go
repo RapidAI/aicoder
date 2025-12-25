@@ -427,7 +427,15 @@ type UpdateResult struct {
 
 func (a *App) CheckUpdate(currentVersion string) (UpdateResult, error) {
 	url := "https://github.com/RapidAI/cceasy/releases"
-	resp, err := http.Get(url)
+	
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return UpdateResult{}, err
+	}
+	req.Header.Set("User-Agent", "Claude-Code-Easy-Suite")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return UpdateResult{}, err
 	}
@@ -438,23 +446,32 @@ func (a *App) CheckUpdate(currentVersion string) (UpdateResult, error) {
 		return UpdateResult{}, err
 	}
 
-	// Regex to find release titles. 
-	// Looking for: href="/RapidAI/cceasy/releases/tag/..." ... > V1.2 ... <
-	// We want to capture the version part (e.g., 1.2 or 1.2.1) from the text content.
-	re := regexp.MustCompile(`href="/RapidAI/cceasy/releases/tag/[^"]+"[^>]*>\s*V?(\d+(\.\d+)+)`)
+	// Regex to find versions in the page text
+	// Matches ">V1.2.1", "> 1.2.2", etc.
+	// We look for a closing tag '>', optional whitespace, optional 'V' or 'v', then the version numbers.
+	// This captures standard semver-ish versions like 1.2, 1.2.1, 1.2.1.1005
+	re := regexp.MustCompile(`>[\s]*[Vv]?(\d+(?:\.\d+)+)`)
 	matches := re.FindAllStringSubmatch(string(body), -1)
 
-	var latestVersion string
+	var highestVersion string
+	
 	for _, match := range matches {
 		if len(match) >= 2 {
-			// match[1] is the version part (e.g. "1.2")
-			latestVersion = match[1]
-			// We assume the first one found is the latest as GitHub sorts releases new to old.
-			break
+			ver := match[1]
+			// ver is just the number part (e.g. "1.2.1") due to the regex group
+			
+			// If we haven't found a version yet, or this one is higher
+			if highestVersion == "" {
+				highestVersion = ver
+			} else {
+				if compareVersions(ver, highestVersion) > 0 {
+					highestVersion = ver
+				}
+			}
 		}
 	}
 
-	if latestVersion == "" {
+	if highestVersion == "" {
 		return UpdateResult{}, fmt.Errorf("no release versions found")
 	}
 
@@ -462,13 +479,13 @@ func (a *App) CheckUpdate(currentVersion string) (UpdateResult, error) {
 	cleanCurrent := strings.TrimPrefix(strings.ToLower(currentVersion), "v")
 	cleanCurrent = strings.Split(cleanCurrent, " ")[0]
 	
-	cleanLatest := strings.TrimPrefix(strings.ToLower(latestVersion), "v")
+	// highestVersion is already clean (just numbers and dots) from the regex
 	
-	if compareVersions(cleanLatest, cleanCurrent) > 0 {
-		return UpdateResult{HasUpdate: true, LatestVersion: latestVersion}, nil
+	if compareVersions(highestVersion, cleanCurrent) > 0 {
+		return UpdateResult{HasUpdate: true, LatestVersion: highestVersion}, nil
 	}
 
-	return UpdateResult{HasUpdate: false, LatestVersion: latestVersion}, nil
+	return UpdateResult{HasUpdate: false, LatestVersion: highestVersion}, nil
 }
 
 // compareVersions returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal
