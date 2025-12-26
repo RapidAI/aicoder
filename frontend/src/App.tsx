@@ -1,6 +1,7 @@
 import {useEffect, useState, useRef} from 'react';
 import './App.css';
 import {buildNumber} from './version';
+import appIcon from './assets/images/appicon.png';
 import {LoadConfig, SaveConfig, CheckEnvironment, ResizeWindow, LaunchClaude, SelectProjectDir, SetLanguage, GetUserHomeDir, CheckUpdate} from "../wailsjs/go/main/App";
 import {WindowHide, EventsOn, EventsOff, BrowserOpenURL, ClipboardGetText, Quit} from "../wailsjs/runtime";
 import {main} from "../wailsjs/go/models";
@@ -725,19 +726,7 @@ function App() {
                     <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
                         <div style={{position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                             <div style={{position: 'absolute', width: '32px', height: '32px', background: 'rgba(249, 115, 22, 0.4)', filter: 'blur(8px)', borderRadius: '50%'}}></div>
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{position: 'relative'}}>
-                                <rect width="24" height="24" rx="7" fill="url(#vibe_grad)" />
-                                <path d="M8 10L5 12.5L8 15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M16 10L19 12.5L16 15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M13.5 8L10.5 17" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                                <defs>
-                                    <linearGradient id="vibe_grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                                        <stop stopColor="#FB923C" />
-                                        <stop offset="0.5" stopColor="#F97316" />
-                                        <stop offset="1" stopColor="#EA580C" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
+                            <img src={appIcon} alt="App Icon" style={{width: '28px', height: '28px', position: 'relative', borderRadius: '6px'}} />
                         </div>
                         <h2 style={{
                             margin: 0, 
@@ -1226,8 +1215,9 @@ function App() {
 
             {showAbout && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowAbout(false); }}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{textAlign: 'center'}}>
                         <button className="modal-close" onClick={() => setShowAbout(false)}>&times;</button>
+                        <img src={appIcon} alt="App Icon" style={{width: '64px', height: '64px', marginBottom: '15px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(249, 115, 22, 0.2)'}} />
                         <h3 style={{marginTop: 0, color: '#fb923c'}}>Claude Code Easy Suite</h3>
                         <p style={{color: '#6b7280', margin: '5px 0'}}>Version V{APP_VERSION} Beta (Build {buildNumber})</p>
                         <p style={{color: '#6b7280', margin: '5px 0'}}>Author: Dr. Daniel</p>
