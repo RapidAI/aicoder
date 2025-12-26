@@ -254,24 +254,54 @@ func (a *App) LaunchClaude(yoloMode bool, projectDir string) {
 	}
 
 	baseUrl := getBaseUrl(selectedModel)
+	
+	home, _ := os.UserHomeDir()
+	localBinDir := filepath.Join(home, ".cceasy", "node", "bin")
+
+	// Search for Claude
 	claudePath, _ := exec.LookPath("claude")
 	if claudePath == "" {
-		home, _ := os.UserHomeDir()
-		claudePath = filepath.Join(home, ".cceasy", "node", "bin", "claude")
-		if _, err := os.Stat(claudePath); err != nil {
-			a.log("Claude Code binary not found at " + claudePath)
+		// 1. Try local bin
+		localClaude := filepath.Join(localBinDir, "claude")
+		if _, err := os.Stat(localClaude); err == nil {
+			claudePath = localClaude
+		} else {
+			// 2. Try global npm prefix
+			npmExec, _ := exec.LookPath("npm")
+			if npmExec == "" {
+				localNpmPath := filepath.Join(localBinDir, "npm")
+				if _, err := os.Stat(localNpmPath); err == nil {
+					npmExec = localNpmPath
+				}
+			}
+			
+			if npmExec != "" {
+				prefixCmd := exec.Command(npmExec, "config", "get", "prefix")
+				if out, err := prefixCmd.Output(); err == nil {
+					prefix := strings.TrimSpace(string(out))
+					globalClaude := filepath.Join(prefix, "bin", "claude")
+					if _, err := os.Stat(globalClaude); err == nil {
+						claudePath = globalClaude
+					}
+				}
+			}
 		}
 	}
 
-	home, _ := os.UserHomeDir()
-	localBinDir := filepath.Join(home, ".cceasy", "node", "bin")
 	scriptsDir := filepath.Join(home, ".cceasy", "scripts")
 	os.MkdirAll(scriptsDir, 0755)
 	launchScriptPath := filepath.Join(scriptsDir, "launch.sh")
 
 	var sb strings.Builder
 	sb.WriteString("#!/bin/bash\n")
-	sb.WriteString(fmt.Sprintf("export PATH=\"%s:$PATH\"\n", localBinDir))
+	
+	// Add both local and global bin to PATH in script
+	pathDirs := []string{localBinDir}
+	if claudePath != "" {
+		pathDirs = append(pathDirs, filepath.Dir(claudePath))
+	}
+	sb.WriteString(fmt.Sprintf("export PATH=\"%s:$PATH\"\n", strings.Join(pathDirs, ":")))
+	
 	sb.WriteString(fmt.Sprintf("export ANTHROPIC_AUTH_TOKEN=\"%s\"\n", selectedModel.ApiKey))
 	sb.WriteString(fmt.Sprintf("export ANTHROPIC_BASE_URL=\"%s\"\n", baseUrl))
 
@@ -286,8 +316,16 @@ func (a *App) LaunchClaude(yoloMode bool, projectDir string) {
 		claudeArgs = " --dangerously-skip-permissions"
 	}
 
-	sb.WriteString("if command -v claude >/dev/null 2>&1; then\n")
-	sb.WriteString(fmt.Sprintf("  exec claude%s\n", claudeArgs))
+	if claudePath != "" {
+		sb.WriteString(fmt.Sprintf("if [ -f \"%s\" ]; then\n", claudePath))
+		sb.WriteString(fmt.Sprintf("  exec \"%s\"%s\n", claudePath, claudeArgs))
+		sb.WriteString("elif command -v claude >/dev/null 2>&1; then\n")
+		sb.WriteString(fmt.Sprintf("  exec claude%s\n", claudeArgs))
+	} else {
+		sb.WriteString("if command -v claude >/dev/null 2>&1; then\n")
+		sb.WriteString(fmt.Sprintf("  exec claude%s\n", claudeArgs))
+	}
+
 	sb.WriteString("elif command -v npx >/dev/null 2>&1; then\n")
 	sb.WriteString("  echo \"claude command not found, trying npx...\"\n")
 	sb.WriteString(fmt.Sprintf("  exec npx @anthropic-ai/claude-code%s\n", claudeArgs))
