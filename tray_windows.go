@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	stdruntime "runtime"
 	"time"
 
 	"github.com/energye/systray"
@@ -15,15 +16,21 @@ func setupTray(app *App, appOptions *options.App) {
 	appOptions.OnStartup = func(ctx context.Context) {
 		app.startup(ctx)
 
-		go systray.Run(func() {
-			systray.SetIcon(icon)
-			systray.SetTitle("Claude Config Manager")
-			systray.SetTooltip("Claude Config Manager")
-			systray.SetOnDClick(func(menu systray.IMenu) {
-				runtime.WindowShow(app.ctx)
-				runtime.WindowSetAlwaysOnTop(app.ctx, true)
-				runtime.WindowSetAlwaysOnTop(app.ctx, false)
-			})
+		go func() {
+			// Lock the OS thread for the systray message loop on Windows
+			stdruntime.LockOSThread()
+			
+			systray.Run(func() {
+				systray.SetIcon(icon)
+				systray.SetTitle("Claude Config Manager")
+				systray.SetTooltip("Claude Config Manager")
+				systray.SetOnDClick(func(menu systray.IMenu) {
+					go func() {
+						runtime.WindowShow(app.ctx)
+						runtime.WindowSetAlwaysOnTop(app.ctx, true)
+						runtime.WindowSetAlwaysOnTop(app.ctx, false)
+					}()
+				})
 
 			mShow := systray.AddMenuItem("Show", "Show Main Window")
 			mLaunch := systray.AddMenuItem("Launch Claude Code", "Launch Claude Code in Terminal")
@@ -115,6 +122,9 @@ func setupTray(app *App, appOptions *options.App) {
 					UpdateTrayMenu(app.CurrentLanguage)
 				}()
 			}
-		}, func() {})
+		}, func() {
+			// Cleanup logic on exit
+		})
+		}()
 	}
 }

@@ -1,8 +1,8 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import './App.css';
 import {buildNumber} from './version';
 import {LoadConfig, SaveConfig, CheckEnvironment, ResizeWindow, LaunchClaude, SelectProjectDir, SetLanguage, GetUserHomeDir, CheckUpdate} from "../wailsjs/go/main/App";
-import {WindowHide, EventsOn, EventsOff, BrowserOpenURL, ClipboardGetText} from "../wailsjs/runtime";
+import {WindowHide, EventsOn, EventsOff, BrowserOpenURL, ClipboardGetText, Quit} from "../wailsjs/runtime";
 import {main} from "../wailsjs/go/models";
 
 const subscriptionUrls: {[key: string]: string} = {
@@ -289,7 +289,8 @@ function App() {
     const [status, setStatus] = useState("");
     const [activeTab, setActiveTab] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const [envLog, setEnvLog] = useState("Initializing...");
+    const [envLogs, setEnvLogs] = useState<string[]>(["Initializing..."]);
+    const [showLogs, setShowLogs] = useState(false);
     const [yoloMode, setYoloMode] = useState(false);
     const [showAbout, setShowAbout] = useState(false);
     const [showModelSettings, setShowModelSettings] = useState(false);
@@ -300,6 +301,14 @@ function App() {
     const [tempProjects, setTempProjects] = useState<any[]>([]); // Local state for project manager
     const [managerStatus, setManagerStatus] = useState("");
     const [lang, setLang] = useState("en");
+
+    const logEndRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (logEndRef.current) {
+            logEndRef.current.scrollTop = logEndRef.current.scrollHeight;
+        }
+    }, [envLogs]);
 
     useEffect(() => {
         // Language detection
@@ -322,9 +331,14 @@ function App() {
         SetLanguage(initialLang);
 
         // Environment Check Logic
-        const logHandler = (msg: string) => setEnvLog(msg);
+        const logHandler = (msg: string) => {
+            setEnvLogs(prev => [...prev, msg]);
+            if (msg.toLowerCase().includes("failed") || msg.toLowerCase().includes("error")) {
+                setShowLogs(true);
+            }
+        };
         const doneHandler = () => {
-            ResizeWindow(792, 460);
+            ResizeWindow(902, 480);
             setIsLoading(false);
         };
 
@@ -615,7 +629,66 @@ function App() {
                         animation: 'indeterminate 1.5s infinite linear'
                     }}></div>
                 </div>
-                <div style={{fontSize: '0.9rem', color: '#6b7280'}}>{envLog}</div>
+                
+                {showLogs ? (
+                    <textarea 
+                        ref={logEndRef}
+                        readOnly
+                        value={envLogs.join('\n')}
+                        style={{
+                            width: '100%',
+                            height: '240px',
+                            padding: '10px',
+                            fontSize: '0.85rem',
+                            fontFamily: 'monospace',
+                            color: '#4b5563',
+                            backgroundColor: '#f9fafb',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            resize: 'none',
+                            outline: 'none',
+                            marginBottom: '10px'
+                        }}
+                    />
+                ) : (
+                    <div style={{fontSize: '0.9rem', color: '#6b7280', marginBottom: '15px', height: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                        {envLogs[envLogs.length - 1]}
+                    </div>
+                )}
+
+                <div style={{display: 'flex', gap: '15px', alignItems: 'center'}}>
+                    <button 
+                        onClick={() => setShowLogs(!showLogs)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#3b82f6',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            textDecoration: 'underline'
+                        }}
+                    >
+                        {showLogs ? (lang === 'zh-Hans' ? '隐藏详情' : 'Hide Details') : (lang === 'zh-Hans' ? '查看详情' : 'Show Details')}
+                    </button>
+
+                    {showLogs && (
+                        <button 
+                            onClick={Quit}
+                            style={{
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 12px',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {lang === 'zh-Hans' ? '退出程序' : 'Quit Application'}
+                        </button>
+                    )}
+                </div>
+                
                 <style>{`
                     @keyframes indeterminate {
                         0% { transform: translateX(-100%); }
