@@ -5,7 +5,7 @@
 Claude Code Easy Suite 是一款基于 Wails + Go + React 开发的桌面 GUI 工具，旨在为 Anthropic 的命令行工具 `claude-code` 提供便捷的配置管理、模型切换以及一键启动功能。
 
 本程序特别针对国内常用的编程模型（GLM, Kimi, 豆包）进行了深度集成，支持 API Key 的快速配置与自动同步。
-
+<img width="1612" height="1052" alt="image" src="https://github.com/user-attachments/assets/c694b8a8-2ee7-46d5-96c0-7ef8fb683258" />
 ## 核心功能
 
 *   **🚀 环境自动准备**：启动时自动检测 Node.js 环境及 Claude Code 安装状态，支持自动安装与版本更新。
