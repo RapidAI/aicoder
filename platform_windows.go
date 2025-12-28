@@ -139,16 +139,30 @@ func (a *App) CheckEnvironment() {
 			}
 		} else {
 			a.log("Claude Code found. Checking for updates...")
-			cmdStr := fmt.Sprintf("%s install -g @anthropic-ai/claude-code", npmPath)
-			a.log("Running command: " + cmdStr)
-
-			installCmd := exec.Command(npmPath, "install", "-g", "@anthropic-ai/claude-code")
-			installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-			if out, err := installCmd.CombinedOutput(); err != nil {
-				a.log("Failed to update Claude Code: " + string(out))
+			// Assuming claude is in PATH since we checked it with claude --version
+			currentVer, err := a.getInstalledClaudeVersion("claude")
+			if err == nil {
+				a.log("Current Claude version: " + currentVer)
+				latestVer, err := a.getLatestClaudeVersion(npmPath)
+				if err == nil {
+					if compareVersions(latestVer, currentVer) > 0 {
+						a.log("New version available: " + latestVer + ". Updating...")
+						installCmd := exec.Command(npmPath, "install", "-g", "@anthropic-ai/claude-code")
+						installCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+						if out, err := installCmd.CombinedOutput(); err != nil {
+							a.log("Failed to update Claude Code: " + string(out))
+						} else {
+							a.log("Claude Code updated successfully.")
+							a.updatePathForNode()
+						}
+					} else {
+						a.log("Claude Code is up to date.")
+					}
+				} else {
+					a.log("Failed to check for updates: " + err.Error())
+				}
 			} else {
-				a.log("Claude Code updated successfully.")
-				a.updatePathForNode()
+				a.log("Failed to determine Claude version: " + err.Error())
 			}
 		}
 

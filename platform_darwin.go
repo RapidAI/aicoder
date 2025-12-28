@@ -170,6 +170,34 @@ func (a *App) CheckEnvironment() {
 			} else {
 				a.log("Claude Code installed.")
 			}
+		} else {
+			a.log("Claude Code found at: " + claudePath)
+			currentVer, err := a.getInstalledClaudeVersion(claudePath)
+			if err == nil {
+				a.log("Current Claude version: " + currentVer)
+				if npmExec != "" {
+					a.log("Checking for Claude Code updates...")
+					latestVer, err := a.getLatestClaudeVersion(npmExec)
+					if err == nil {
+						if compareVersions(latestVer, currentVer) > 0 {
+							a.log("New version available: " + latestVer + ". Updating...")
+							installCmd := exec.Command(npmExec, "install", "-g", "@anthropic-ai/claude-code")
+							installCmd.Env = os.Environ()
+							if err := installCmd.Run(); err != nil {
+								a.log("Update failed: " + err.Error())
+							} else {
+								a.log("Claude Code updated to " + latestVer)
+							}
+						} else {
+							a.log("Claude Code is up to date.")
+						}
+					} else {
+						a.log("Failed to check for updates: " + err.Error())
+					}
+				}
+			} else {
+				a.log("Failed to determine Claude version: " + err.Error())
+			}
 		}
 
 		a.log("Environment check complete.")

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -570,4 +571,58 @@ func compareVersions(v1, v2 string) int {
 		}
 	}
 	return 0
+}
+
+func (a *App) getInstalledClaudeVersion(claudePath string) (string, error) {
+	// Check if the path exists
+	if _, err := os.Stat(claudePath); err != nil {
+		// If explicit path fails, try finding it in PATH if it's just "claude"
+		if claudePath == "claude" {
+			path, err := exec.LookPath("claude")
+			if err != nil {
+				return "", err
+			}
+			claudePath = path
+		} else {
+			return "", err
+		}
+	}
+
+	cmd := exec.Command(claudePath, "--version")
+	// Hide window on Windows
+	if runtime.GOOS == "windows" {
+		// We can't easily access syscall.SysProcAttr here without importing syscall
+		// but since this is just getting version, it should be quick.
+		// If we really need to hide it, we might need platform specific helpers.
+		// For now, let's assume it's fine or we handle it in platform code.
+	}
+	
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	// Output format example: claude-code/0.2.29 darwin-arm64 node-v22.12.0
+	output := strings.TrimSpace(string(out))
+	parts := strings.Split(output, " ")
+	if len(parts) > 0 {
+		// "claude-code/0.2.29"
+		verParts := strings.Split(parts[0], "/")
+		if len(verParts) == 2 {
+			return verParts[1], nil
+		}
+		// If output is just the version (unlikely but possible)
+		if len(parts) == 1 && strings.Contains(parts[0], ".") {
+			return parts[0], nil
+		}
+	}
+	return "", fmt.Errorf("unexpected output format: %s", output)
+}
+
+func (a *App) getLatestClaudeVersion(npmPath string) (string, error) {
+	cmd := exec.Command(npmPath, "view", "@anthropic-ai/claude-code", "version")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
