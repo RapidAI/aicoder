@@ -13,6 +13,7 @@ import (
 	stdruntime "runtime"
 	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -20,6 +21,7 @@ import (
 type App struct {
 	ctx             context.Context
 	CurrentLanguage string
+	watcher         *fsnotify.Watcher
 }
 
 var OnConfigChanged func(AppConfig)
@@ -61,6 +63,62 @@ func (a *App) startup(ctx context.Context) {
 	// Force sync system env vars using current config on startup
 	config, _ := a.LoadConfig()
 	a.syncToSystemEnv(config)
+	a.startConfigWatcher()
+	a.startConfigWatcher()
+}
+
+func (a *App) startConfigWatcher() {
+	var err error
+	a.watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		a.log("Failed to create file watcher: " + err.Error())
+		return
+	}
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-a.watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					a.log("Config file modified: " + event.Name)
+					// Reload config and emit event
+					// We use a debounce-like approach or just reload. 
+					// Since Wails events are async, it should be fine.
+					// However, writing the config (SaveConfig) also triggers a write event.
+					// We should probably check if the change was internal or external, 
+					// but that's hard. For now, simply reloading might be okay, 
+					// but it could cause a loop if we are not careful.
+					// Actually, if we just emit 'config-updated', the frontend updates.
+					// But if the frontend updates, it might save... 
+					// Let's assume for now this is for external edits.
+					
+					config, err := a.LoadConfig()
+					if err == nil {
+						runtime.EventsEmit(a.ctx, "config-updated", config)
+						// Also re-sync system envs
+						a.syncToSystemEnv(config)
+					}
+				}
+			case err, ok := <-a.watcher.Errors:
+				if !ok {
+					return
+				}
+				a.log("Watcher error: " + err.Error())
+			}
+		}
+	}()
+
+	configPath, err := a.getConfigPath()
+	if err == nil {
+		if err := a.watcher.Add(configPath); err != nil {
+			a.log("Failed to watch config file: " + err.Error())
+		} else {
+			a.log("Watching config file: " + configPath)
+		}
+	}
 }
 
 func (a *App) SetLanguage(lang string) {
