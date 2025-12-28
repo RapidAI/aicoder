@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	stdruntime "runtime"
 	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -592,7 +593,7 @@ func (a *App) getInstalledClaudeVersion(claudePath string) (string, error) {
 
 	cmd := exec.Command(claudePath, "--version")
 	// Hide window on Windows
-	if runtime.GOOS == "windows" {
+	if stdruntime.GOOS == "windows" {
 		// We can't easily access syscall.SysProcAttr here without importing syscall
 		// but since this is just getting version, it should be quick.
 		// If we really need to hide it, we might need platform specific helpers.
