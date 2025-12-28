@@ -27,7 +27,7 @@ func main() {
 		Title:     "Claude Code Easy Suite",
 		Frameless: true,
 		Width:     554,
-		Height:    200,
+		Height:    240,
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: "claude-code-easy-suite-lock",
 			OnSecondInstanceLaunch: func(secondInstanceData options.SecondInstanceData) {
