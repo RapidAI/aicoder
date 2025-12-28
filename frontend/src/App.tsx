@@ -420,7 +420,7 @@ function App() {
             }
         };
         const doneHandler = () => {
-            ResizeWindow(760, 480);
+            ResizeWindow(760, 520);
             setIsLoading(false);
         };
 
