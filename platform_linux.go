@@ -143,7 +143,7 @@ func (a *App) installNodeJSManually(destDir string) error {
 		arch = "x64"
 	}
 	
-	version := "22.14.0"
+	version := RequiredNodeVersion
 	fileName := fmt.Sprintf("node-v%s-linux-%s.tar.xz", version, arch)
 	
 downloadURL := fmt.Sprintf("https://nodejs.org/dist/v%s/%s", version, fileName)

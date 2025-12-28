@@ -58,3 +58,5 @@ var trayTranslations = map[string]map[string]string{
 		"actions": "Actions",
 	},
 }
+
+const RequiredNodeVersion = "22.14.0"

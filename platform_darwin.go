@@ -183,7 +183,7 @@ func (a *App) installNodeJSManually(destDir string) error {
 		arch = "x64" // Node uses x64 for amd64
 	}
 	
-	version := "v22.12.0"
+	version := "v" + RequiredNodeVersion
 	fileName := fmt.Sprintf("node-%s-darwin-%s.tar.gz", version, arch)
 	url := fmt.Sprintf("https://nodejs.org/dist/%s/%s", version, fileName)
 	

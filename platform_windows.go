@@ -165,7 +165,7 @@ func (a *App) installNodeJS() error {
 	}
 
 	// Using a more recent version
-	nodeVersion := "22.14.0"
+	nodeVersion := RequiredNodeVersion
 	fileName := fmt.Sprintf("node-v%s-%s.msi", nodeVersion, nodeArch)
 	
 	downloadURL := fmt.Sprintf("https://nodejs.org/dist/v%s/%s", nodeVersion, fileName)
