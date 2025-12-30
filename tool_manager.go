@@ -33,7 +33,27 @@ func (tm *ToolManager) GetToolStatus(name string) ToolStatus {
 
 	path, err := exec.LookPath(binaryName)
 	if err != nil {
-		return status
+		// Fallback: Check local node bin directly
+		// This handles cases where PATH hasn't been updated yet or is missing the local bin
+		home, _ := os.UserHomeDir()
+		var localBin string
+		
+		if runtime.GOOS == "windows" {
+			// Windows npm global installs usually put .cmd or .ps1 in the prefix root or bin
+			// We check both the bin folder and the prefix root just in case
+			localBin = filepath.Join(home, ".cceasy", "node", binaryName+".cmd")
+			if _, err := os.Stat(localBin); err != nil {
+				localBin = filepath.Join(home, ".cceasy", "node", "bin", binaryName+".cmd")
+			}
+		} else {
+			localBin = filepath.Join(home, ".cceasy", "node", "bin", binaryName)
+		}
+
+		if _, err := os.Stat(localBin); err == nil {
+			path = localBin
+		} else {
+			return status
+		}
 	}
 
 	status.Installed = true
@@ -79,23 +99,46 @@ func (tm *ToolManager) InstallTool(name string) error {
 		return fmt.Errorf("npm not found. Please ensure Node.js is installed.")
 	}
 
-	var cmd *exec.Cmd
+	home, _ := os.UserHomeDir()
+	localNodeDir := filepath.Join(home, ".cceasy", "node")
+	
+	// Ensure the local node directory exists for prefix usage
+	if err := os.MkdirAll(localNodeDir, 0755); err != nil {
+		return fmt.Errorf("failed to create local node directory: %w", err)
+	}
+
+	var packageName string
 	switch name {
 	case "claude":
-		cmd = exec.Command(npmPath, "install", "-g", "@anthropic-ai/claude-code")
+		packageName = "@anthropic-ai/claude-code"
 	case "gemini":
-		cmd = exec.Command(npmPath, "install", "-g", "@google/gemini-cli")
+		packageName = "@google/gemini-cli"
 	case "codex":
-		cmd = exec.Command(npmPath, "install", "-g", "@openai/codex")
+		packageName = "@openai/codex"
 	default:
 		return fmt.Errorf("unknown tool: %s", name)
 	}
 
-	// Set environment to include local node bin for the installation process
-	home, _ := os.UserHomeDir()
-	localBinDir := filepath.Join(home, ".cceasy", "node", "bin")
+	// Use --prefix to install to our local folder, avoiding sudo/permission issues
+	// This works with both system npm and local npm.
+	args := []string{"install", "-g", packageName, "--prefix", localNodeDir}
+	
+	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		localBinDir = filepath.Join(home, ".cceasy", "node")
+		// On Windows, if we are using the system npm, it might need 'cmd /c'
+		if !strings.Contains(strings.ToLower(npmPath), ".cmd") && !strings.Contains(strings.ToLower(npmPath), ".exe") {
+			cmd = exec.Command("cmd", append([]string{"/c", npmPath}, args...)...)
+		} else {
+			cmd = exec.Command(npmPath, args...)
+		}
+	} else {
+		cmd = exec.Command(npmPath, args...)
+	}
+
+	// Set environment to include local node bin for the installation process
+	localBinDir := filepath.Join(localNodeDir, "bin")
+	if runtime.GOOS == "windows" {
+		localBinDir = localNodeDir
 	}
 
 	env := os.Environ()
@@ -112,15 +155,7 @@ func (tm *ToolManager) InstallTool(name string) error {
 	}
 	cmd.Env = env
 
-	// For Windows, handle .cmd extension and shell execution
-	if runtime.GOOS == "windows" {
-		if !strings.HasSuffix(strings.ToLower(npmPath), ".cmd") && !strings.HasSuffix(strings.ToLower(npmPath), ".exe") {
-			cmd.Args = append([]string{"/c", npmPath}, cmd.Args[1:]...)
-			cmd.Path = "cmd"
-		}
-	}
-
-	tm.app.log(fmt.Sprintf("Running installation: %s %s", npmPath, strings.Join(cmd.Args[1:], " ")))
+	tm.app.log(fmt.Sprintf("Running installation: %s %s", cmd.Path, strings.Join(cmd.Args[1:], " ")))
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
