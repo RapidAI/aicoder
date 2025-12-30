@@ -997,16 +997,16 @@ function App() {
                 {/* Global Action Bar (Footer) */}
                 {config && (
                     <div className="global-action-bar">
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                            <div style={{fontSize: '0.7rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Runner Status</div>
-                            <div style={{fontSize: '0.9rem', fontWeight: 600, color: '#374151'}}>
-                                <span style={{color: '#fb923c', textTransform: 'capitalize'}}>{activeTool}</span>
-                                <span style={{margin: '0 8px', color: '#d1d5db'}}>|</span>
-                                <span>{(config as any)[activeTool].current_model}</span>
+                        <div className="action-bar-row">
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                                <div style={{fontSize: '0.7rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Runner Status</div>
+                                <div style={{fontSize: '0.9rem', fontWeight: 600, color: '#374151'}}>
+                                    <span style={{color: '#fb923c', textTransform: 'capitalize'}}>{activeTool}</span>
+                                    <span style={{margin: '0 8px', color: '#d1d5db'}}>|</span>
+                                    <span>{(config as any)[activeTool].current_model}</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
                             <label style={{display:'flex', alignItems:'center', cursor:'pointer', fontSize: '0.85rem'}}>
                                 <input 
                                     type="checkbox" 
@@ -1016,7 +1016,9 @@ function App() {
                                 />
                                 <span>Yolo Mode</span>
                             </label>
-                            
+                        </div>
+                        
+                        <div className="action-bar-row">
                             <button 
                                 className="btn-launch" 
                                 onClick={() => {
@@ -1027,9 +1029,8 @@ function App() {
                                         setStatus(t("projectDirError"));
                                     }
                                 }}
-                                style={{margin: 0, minWidth: '160px'}}
                             >
-                                {t("launch")}
+                                {t("launchBtn")}
                             </button>
                         </div>
                     </div>

@@ -113,10 +113,17 @@ body {
     border-top: 1px solid var(--border-color);
     padding: 15px 20px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 15px;
     box-sizing: border-box;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.action-bar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .header {
@@ -348,15 +355,15 @@ body {
 .btn-launch {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
-    padding: 12px 18px;
+    padding: 24px 18px; /* Doubled height from 12px */
     border: none;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 1.2rem; /* Increased from 1rem */
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
     width: 100%;
-    margin-top: 10px;
+    margin-top: 0;
     box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25);
     display: flex;
     align-items: center;
