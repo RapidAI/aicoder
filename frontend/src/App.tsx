@@ -12,7 +12,8 @@ const subscriptionUrls: {[key: string]: string} = {
     "doubao": "https://www.volcengine.com/activity/codingplan",
     "minimax": "https://platform.minimaxi.com/user-center/payment/coding-plan",
     "codex": "https://www.aicodemirror.com/register?invitecode=CZPPWZ",
-    "gemini": "https://www.aicodemirror.com/register?invitecode=CZPPWZ"
+    "gemini": "https://www.aicodemirror.com/register?invitecode=CZPPWZ",
+    "aicodemirror": "https://www.aicodemirror.com/register?invitecode=CZPPWZ"
 };
 
 const APP_VERSION = "1.3.2.1";
@@ -69,8 +70,8 @@ const translations: any = {
         "foundNewVersion": "Found new version",
         "downloadNow": "Download Now",
         "paste": "Paste",
-        "hideConfig": "Hide Settings",
-        "editConfig": "Edit Settings",
+        "hideConfig": "Configure",
+        "editConfig": "Configure",
         "bugReport": "Bug Report or Suggestion"
     },
     "zh-Hans": {
@@ -124,8 +125,8 @@ const translations: any = {
         "foundNewVersion": "发现新版本",
         "downloadNow": "立即下载",
         "paste": "粘贴",
-        "hideConfig": "隐藏设置",
-        "editConfig": "修改设置",
+        "hideConfig": "配置",
+        "editConfig": "配置",
         "bugReport": "Bug 报告或建议"
     },
     "zh-Hant": {
@@ -176,7 +177,9 @@ const translations: any = {
         "updateAvailable": "發現新版本: ",
         "foundNewVersion": "發現新版本",
         "downloadNow": "立即下載",
-        "paste": "貼上"
+        "paste": "貼上",
+        "hideConfig": "配置",
+        "editConfig": "配置"
     },
     "ko": {
         "title": "AICoder",
@@ -221,7 +224,9 @@ const translations: any = {
         "switched": "서비스 제공자 전환 및 동기화 완료!",
         "langName": "한국어",
         "custom": "사용자 정의",
-        "paste": "붙여넣기"
+        "paste": "붙여넣기",
+        "hideConfig": "설정",
+        "editConfig": "설정"
     },
     "ja": {
         "title": "AICoder",
@@ -266,7 +271,9 @@ const translations: any = {
         "switched": "プロバイダーの切り替えと同期が完了しました！",
         "langName": "日本語",
         "custom": "カスタム",
-        "paste": "貼り付け"
+        "paste": "貼り付け",
+        "hideConfig": "設定",
+        "editConfig": "設定"
     },
     "de": {
         "title": "AICoder",
@@ -311,7 +318,9 @@ const translations: any = {
         "switched": "Anbieter gewechselt & synchronisiert!",
         "langName": "Deutsch",
         "custom": "Benutzerdefiniert",
-        "paste": "Einfügen"
+        "paste": "Einfügen",
+        "hideConfig": "Konfigurieren",
+        "editConfig": "Konfigurieren"
     },
     "fr": {
         "title": "AICoder",
@@ -322,9 +331,9 @@ const translations: any = {
         "hide": "Masquer",
         "launch": "Lancer",
         "projectDir": "Répertoire du projet",
-        "change": "Changer",
+        "change": "Modifier",
         "yoloMode": "Mode Yolo",
-        "dangerouslySkip": "(Danger : Ignorer les permissions)",
+        "dangerouslySkip": "(Sauter les permissions dangereusement)",
         "launchBtn": "Lancer Claude Code",
         "activeModel": "FOURNISSEUR ACTIF",
         "modelSettings": "PARAMÈTRES DU FOURNISSEUR",
@@ -333,18 +342,18 @@ const translations: any = {
         "getKey": "Obtenir une clé API",
         "enterKey": "Entrer la clé API",
         "apiEndpoint": "Point de terminaison API",
-        "saveChanges": "Enregistrer et Fermer",
+        "saveChanges": "Enregistrer et fermer",
         "saving": "Enregistrement...",
         "saved": "Enregistré avec succès !",
         "recovering": "Récupération...",
         "recoverSuccess": "Récupération réussie !",
         "recoverSuccessAlert": "Claude Code a été réinitialisé.",
-        "confirmRecover": "Êtes-vous sûr de vouloir récupérer Claude Code à son état initial ? Toutes les configurations seront effacées.",
+        "confirmRecover": "Êtes-vous sûr de vouloir récupérer Claude Code dans son état initial ? Cela effacera toutes les configurations.",
         "recoverTitle": "Récupérer Claude Code",
-        "recoverWarning": "Attention : Cela supprimera définitivement vos configurations et jetons d'authentification Claude Code. Cette action est irréversible.",
+        "recoverWarning": "Attention : Cela supprimera définitivement vos configurations Claude Code et vos jetons d'authentification. Cette action est irréversible.",
         "startRecover": "Démarrer la récupération",
         "close": "Fermer",
-        "manageProjects": "Gestion de projet",
+        "manageProjects": "Gérer les projets",
         "projectManagement": "Gestion de projet",
         "projectName": "Nom du projet",
         "delete": "Supprimer",
@@ -356,129 +365,59 @@ const translations: any = {
         "switched": "Fournisseur changé et synchronisé !",
         "langName": "Français",
         "custom": "Personnalisé",
-        "paste": "Coller"
+        "paste": "Coller",
+        "hideConfig": "Configurer",
+        "editConfig": "Configurer"
     }
 };
 
 interface ToolConfigurationProps {
     toolName: string;
     toolCfg: any;
-    activeTab: number;
-    setActiveTab: (idx: number) => void;
     showModelSettings: boolean;
     setShowModelSettings: (show: boolean) => void;
     handleModelSwitch: (name: string) => void;
-    handleApiKeyChange: (key: string) => void;
-    handleModelUrlChange: (url: string) => void;
-    onOpenSubscribe: (name: string) => void;
-    save: () => void;
     t: (key: string) => string;
-    ClipboardGetText: () => Promise<string>;
 }
 
 const ToolConfiguration = ({
-    toolName, toolCfg, activeTab, setActiveTab, showModelSettings, setShowModelSettings,
-    handleModelSwitch, handleApiKeyChange, handleModelUrlChange, onOpenSubscribe, save, t, ClipboardGetText
+    toolName, toolCfg, showModelSettings, setShowModelSettings,
+    handleModelSwitch, t
 }: ToolConfigurationProps) => {
-    const currentModelConfig = toolCfg.models[activeTab] || { model_name: "", api_key: "", model_url: "" };
-
     return (
-        <>
-            <div style={{
-                backgroundColor: '#fffbf5', 
-                padding: '15px', 
-                borderRadius: '12px',
-                border: '1px solid rgba(251, 146, 60, 0.1)',
-                marginBottom: '15px'
-            }}>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
-                    <h3 style={{fontSize: '0.9rem', color: '#fb923c', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0}}>{t("activeModel")}</h3>
-                    <button 
-                        className="btn-link" 
-                        onClick={() => setShowModelSettings(!showModelSettings)}
-                        style={{borderColor: '#fb923c', color: '#fb923c'}}
-                    >
-                        {showModelSettings ? t("hideConfig") : t("editConfig")}
-                    </button>
-                </div>
-                <div className="model-switcher" style={{flexWrap: 'wrap'}}>
-                    {toolCfg.models.map((model: any) => (
-                        <button
-                            key={model.model_name}
-                            className={`model-btn ${toolCfg.current_model === model.model_name ? 'selected' : ''}`}
-                            onClick={() => handleModelSwitch(model.model_name)}
-                            style={{
-                                minWidth: '120px',
-                                borderBottom: (model.api_key && model.api_key.trim() !== "") ? '3px solid #fb923c' : '1px solid var(--border-color)'
-                            }}
-                        >
-                            {model.model_name}
-                        </button>
-                    ))}
-                </div>
+        <div style={{
+            backgroundColor: '#fffbf5', 
+            padding: '15px', 
+            borderRadius: '12px',
+            border: '1px solid rgba(251, 146, 60, 0.1)',
+            marginBottom: '15px'
+        }}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
+                <h3 style={{fontSize: '0.9rem', color: '#fb923c', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0}}>{t("activeModel")}</h3>
+                <button 
+                    className="btn-link" 
+                    onClick={() => setShowModelSettings(true)}
+                    style={{borderColor: '#fb923c', color: '#fb923c'}}
+                >
+                    {t("editConfig")}
+                </button>
             </div>
-
-            {showModelSettings && (
-                <div style={{
-                    backgroundColor: '#fff', 
-                    padding: '15px', 
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-color)',
-                    marginBottom: '15px'
-                }}>
-                    <div className="tabs" style={{marginBottom: '15px'}}>
-                        {toolCfg.models.map((model: any, index: number) => (
-                            <button
-                                key={index}
-                                className={`tab-button ${activeTab === index ? 'active' : ''}`}
-                                onClick={() => setActiveTab(index)}
-                            >
-                                {model.model_name}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="form-group">
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
-                            <label className="form-label" style={{margin: 0}}>{t("apiKey")}</label>
-                            <button 
-                                className="btn-link" 
-                                style={{fontSize: '0.75rem', padding: '2px 8px'}}
-                                onClick={() => onOpenSubscribe(currentModelConfig.model_name)}
-                            >
-                                {t("getKey")}
-                            </button>
-                        </div>
-                        <div style={{display: 'flex', gap: '10px'}}>
-                            <input 
-                                type="password" 
-                                className="form-input"
-                                value={currentModelConfig.api_key} 
-                                onChange={(e) => handleApiKeyChange(e.target.value)}
-                                placeholder={t("enterKey")}
-                            />
-                            <button className="btn-subscribe" onClick={async () => {
-                                const text = await ClipboardGetText();
-                                if (text) handleApiKeyChange(text);
-                            }}>📋</button>
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">{t("apiEndpoint")}</label>
-                        <input 
-                            type="text" 
-                            className="form-input"
-                            value={currentModelConfig.model_url} 
-                            onChange={(e) => handleModelUrlChange(e.target.value)}
-                            placeholder="https://api.example.com/v1"
-                        />
-                    </div>
-
-                    <button className="btn-primary" style={{width: '100%'}} onClick={save}>{t("saveChanges")}</button>
-                </div>
-            )}
-        </>
+            <div className="model-switcher" style={{flexWrap: 'wrap'}}>
+                {toolCfg.models.map((model: any) => (
+                    <button
+                        key={model.model_name}
+                        className={`model-btn ${toolCfg.current_model === model.model_name ? 'selected' : ''}`}
+                        onClick={() => handleModelSwitch(model.model_name)}
+                        style={{
+                            minWidth: '120px',
+                            borderBottom: (model.api_key && model.api_key.trim() !== "") ? '3px solid #fb923c' : '1px solid var(--border-color)'
+                        }}
+                    >
+                        {model.model_name}
+                    </button>
+                ))}
+            </div>
+        </div>
     );
 };
 
@@ -1042,17 +981,10 @@ function App() {
                             <ToolConfiguration 
                                 toolName={navTab === 'claude' ? 'Claude' : navTab === 'gemini' ? 'Gemini' : 'Codex'}
                                 toolCfg={toolCfg}
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
                                 showModelSettings={showModelSettings}
                                 setShowModelSettings={setShowModelSettings}
                                 handleModelSwitch={handleModelSwitch}
-                                handleApiKeyChange={handleApiKeyChange}
-                                handleModelUrlChange={handleModelUrlChange}
-                                onOpenSubscribe={handleOpenSubscribe}
-                                save={save}
                                 t={t}
-                                ClipboardGetText={ClipboardGetText}
                             />
 
                             <div style={{
@@ -1220,6 +1152,71 @@ function App() {
                         <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px'}}>
                             <button className="btn-hide" onClick={() => setShowRecoverModal(false)}>{t("close")}</button>
                             <button className="btn-primary" style={{backgroundColor: '#ef4444'}} onClick={handleStartRecover}>{t("startRecover")}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showModelSettings && config && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{width: '500px', textAlign: 'left'}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                            <h3 style={{margin: 0, color: '#fb923c'}}>{t("modelSettings")}</h3>
+                            <button className="modal-close" onClick={() => setShowModelSettings(false)}>&times;</button>
+                        </div>
+
+                        <div className="tabs" style={{marginBottom: '20px'}}>
+                            {(config as any)[activeTool].models.map((model: any, index: number) => (
+                                <button
+                                    key={index}
+                                    className={`tab-button ${activeTab === index ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(index)}
+                                >
+                                    {model.model_name}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="form-group">
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
+                                <label className="form-label" style={{margin: 0}}>{t("apiKey")}</label>
+                                <button 
+                                    className="btn-link" 
+                                    style={{fontSize: '0.75rem', padding: '2px 8px'}}
+                                    onClick={() => handleOpenSubscribe((config as any)[activeTool].models[activeTab].model_name)}
+                                >
+                                    {t("getKey")}
+                                </button>
+                            </div>
+                            <div style={{display: 'flex', gap: '10px'}}>
+                                <input 
+                                    type="password" 
+                                    className="form-input"
+                                    value={(config as any)[activeTool].models[activeTab].api_key} 
+                                    onChange={(e) => handleApiKeyChange(e.target.value)}
+                                    placeholder={t("enterKey")}
+                                />
+                                <button className="btn-subscribe" onClick={async () => {
+                                    const text = await ClipboardGetText();
+                                    if (text) handleApiKeyChange(text);
+                                }}>{t("paste")}</button>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">{t("apiEndpoint")}</label>
+                            <input 
+                                type="text" 
+                                className="form-input"
+                                value={(config as any)[activeTool].models[activeTab].model_url} 
+                                onChange={(e) => handleModelUrlChange(e.target.value)}
+                                placeholder="https://api.example.com/v1"
+                            />
+                        </div>
+
+                        <div style={{display: 'flex', gap: '10px', marginTop: '30px'}}>
+                            <button className="btn-primary" style={{flex: 1}} onClick={save}>{t("saveChanges")}</button>
+                            <button className="btn-hide" style={{flex: 1}} onClick={() => setShowModelSettings(false)}>{t("close")}</button>
                         </div>
                     </div>
                 </div>
