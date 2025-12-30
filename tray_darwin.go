@@ -13,10 +13,9 @@ import (
 )
 
 func setupTray(app *App, appOptions *options.App) {
-	// We still use a basic Application Menu for macOS to support standard shortcuts (Copy/Paste)
+	// We still use a basic Application Menu for macOS to support standard shortcuts
 	appMenu := menu.NewMenu()
 	appMenu.Append(menu.AppMenu())
-	appMenu.Append(menu.EditMenu())
 	appOptions.Menu = appMenu
 
 	appOptions.OnStartup = func(ctx context.Context) {
