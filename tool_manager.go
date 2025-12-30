@@ -24,19 +24,21 @@ func NewToolManager(app *App) *ToolManager {
 
 func (tm *ToolManager) GetToolStatus(name string) ToolStatus {
 	status := ToolStatus{Name: name}
-	path, err := exec.LookPath(name)
+	
+	binaryName := name
+	if name == "gemini" {
+		binaryName = "claude"
+	}
+
+	path, err := exec.LookPath(binaryName)
 	if err != nil {
-		// Try common aliases or specific checks if needed
-		if name == "claude" {
-			// Already handled in app.go, but let's centralize here
-		}
 		return status
 	}
 
 	status.Installed = true
 	status.Path = path
 	
-	version, err := tm.getToolVersion(name, path)
+	version, err := tm.getToolVersion(binaryName, path)
 	if err == nil {
 		status.Version = version
 	}
@@ -46,16 +48,8 @@ func (tm *ToolManager) GetToolStatus(name string) ToolStatus {
 
 func (tm *ToolManager) getToolVersion(name, path string) (string, error) {
 	var cmd *exec.Cmd
-	switch name {
-	case "claude":
-		cmd = exec.Command(path, "--version")
-	case "gemini":
-		cmd = exec.Command(path, "--version")
-	case "codex":
-		cmd = exec.Command(path, "--version")
-	default:
-		cmd = exec.Command(path, "--version")
-	}
+	// Use --version for all tools
+	cmd = exec.Command(path, "--version")
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -64,7 +58,7 @@ func (tm *ToolManager) getToolVersion(name, path string) (string, error) {
 
 	output := strings.TrimSpace(string(out))
 	// Parse version based on tool output format
-	if name == "claude" {
+	if strings.Contains(name, "claude") {
 		// claude-code/0.2.29 darwin-arm64 node-v22.12.0
 		parts := strings.Split(output, " ")
 		if len(parts) > 0 {
@@ -75,7 +69,6 @@ func (tm *ToolManager) getToolVersion(name, path string) (string, error) {
 		}
 	}
 
-	// Default fallback: return the first thing that looks like a version
 	return output, nil
 }
 
@@ -85,11 +78,10 @@ func (tm *ToolManager) InstallTool(name string) error {
 	case "claude":
 		cmd = exec.Command("npm", "install", "-g", "@anthropic-ai/claude-code")
 	case "gemini":
-		// Assuming gemini-chat-cli or similar
-		cmd = exec.Command("npm", "install", "-g", "gemini-chat-cli")
+		// Gemini uses the same Claude Code CLI as per user instructions
+		cmd = exec.Command("npm", "install", "-g", "@anthropic-ai/claude-code")
 	case "codex":
-		// Assuming an npm package for codex if it exists, or just placeholder
-		cmd = exec.Command("npm", "install", "-g", "openai-codex-cli")
+		cmd = exec.Command("npm", "install", "-g", "@openai/codex")
 	default:
 		return fmt.Errorf("unknown tool: %s", name)
 	}
