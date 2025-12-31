@@ -401,11 +401,6 @@ wire_api = "responses"
 }
 
 func (a *App) syncToGeminiSettings(config AppConfig) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
 	var selectedModel *ModelConfig
 	for _, m := range config.Gemini.Models {
 		if m.ModelName == config.Gemini.CurrentModel {
@@ -418,20 +413,17 @@ func (a *App) syncToGeminiSettings(config AppConfig) error {
 		return fmt.Errorf("selected gemini model not found")
 	}
 
-	// If "Original" is selected, delete all config files and DO NOT write anything
-	geminiDir := filepath.Join(home, ".gemini")
+	dir, configPath, _ := a.getGeminiConfigPaths()
+
 	if strings.ToLower(selectedModel.ModelName) == "original" {
-		os.RemoveAll(geminiDir)
+		a.clearGeminiConfig()
 		return nil
 	}
 
-	// For custom providers, create configuration files
-	if err := os.MkdirAll(geminiDir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	// Create config file for custom provider
-	configPath := filepath.Join(geminiDir, "config.json")
 	configData := map[string]interface{}{
 		"apiKey":  selectedModel.ApiKey,
 		"baseUrl": selectedModel.ModelUrl,

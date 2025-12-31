@@ -130,3 +130,42 @@ func TestSyncToClaudeSettings_Original(t *testing.T) {
 		t.Errorf("Expected legacy .claude.json to be gone")
 	}
 }
+
+func TestSyncToGeminiSettings_Original(t *testing.T) {
+	tmpHome, _ := os.MkdirTemp("", "gemini-original-test")
+	defer os.RemoveAll(tmpHome)
+
+	os.Setenv("HOME", tmpHome)
+	if os.Getenv("USERPROFILE") != "" {
+		os.Setenv("USERPROFILE", tmpHome)
+	}
+
+	app := &App{}
+	
+	// Create some files to be deleted
+	dir, configPath, legacy := app.getGeminiConfigPaths()
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(configPath, []byte("junk"), 0644)
+	os.WriteFile(legacy, []byte("junk"), 0644)
+
+	config := AppConfig{
+		Gemini: ToolConfig{
+			CurrentModel: "Original",
+			Models: []ModelConfig{
+				{ModelName: "Original"},
+			},
+		},
+	}
+
+	err := app.syncToGeminiSettings(config)
+	if err != nil {
+		t.Fatalf("syncToGeminiSettings failed: %v", err)
+	}
+
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("Expected .gemini directory to be gone")
+	}
+	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
+		t.Errorf("Expected legacy .geminirc to be gone")
+	}
+}
