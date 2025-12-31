@@ -880,7 +880,14 @@ function App() {
                                 >
                                     {t("checkUpdate")}
                                 </button>
-                                <button className="btn-link" onClick={() => BrowserOpenURL("https://github.com/RapidAI/cceasy")}>GitHub</button>
+                                <button className="btn-link" onClick={() => {
+                                    const manualUrl = (lang === 'zh-Hans' || lang === 'zh-Hant') 
+                                        ? "https://github.com/RapidAI/aicoder/blob/main/UserManual_CN.md" 
+                                        : "https://github.com/RapidAI/aicoder/blob/main/UserManual_EN.md";
+                                    BrowserOpenURL(manualUrl);
+                                }}>{t("manual")}</button>
+                                <button className="btn-link" onClick={() => BrowserOpenURL("https://github.com/BIT-ENGD/cs146s_cn")}>{t("cs146s")}</button>
+                                <button className="btn-link" onClick={() => BrowserOpenURL("https://github.com/RapidAI/aicoder")}>GitHub</button>
                             </div>
                         </div>
                     )}
