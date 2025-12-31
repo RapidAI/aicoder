@@ -21,10 +21,10 @@ This plan outlines the steps to fix the environment configuration logic, ensurin
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Gemini CLI' (Protocol in workflow.md) [checkpoint: 00b87b7]
 
 ## Phase 4: OpenAI Codex Configuration Fixes
-- [ ] Task: Update `syncToCodexSettings` to handle the "Original" provider by deleting `.codex` directory or files.
-- [ ] Task: Refactor `LaunchTool` for Codex to handle `OPENAI_API_KEY` and `WIRE_API` unsetting in "Original" mode.
-- [ ] Task: Write unit tests to verify Codex cleanup and custom setup.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: OpenAI Codex' (Protocol in workflow.md)
+- [x] Task: Update `syncToCodexSettings` to handle the "Original" provider by deleting `.codex` directory or files.
+- [x] Task: Refactor `LaunchTool` for Codex to handle `OPENAI_API_KEY` and `WIRE_API` unsetting in "Original" mode.
+- [x] Task: Write unit tests to verify Codex cleanup and custom setup.
+- [x] Task: Conductor - User Manual Verification 'Phase 4: OpenAI Codex' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 5: Global Launch & Persistence Refinement
 - [ ] Task: Ensure `SaveConfig` does not inadvertently write "leak" data when switching providers.
