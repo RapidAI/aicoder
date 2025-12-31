@@ -25,7 +25,8 @@ const translations: any = {
         "manual": "Manual",
         "cs146s": "Online Course",
         "hide": "Hide",
-        "launch": "LAUNCH",
+        "launch": "Start Coding",
+        "project": "Project",
         "projectDir": "Project Directory",
         "change": "Change",
         "yoloMode": "Yolo Mode",
@@ -84,7 +85,8 @@ const translations: any = {
         "manual": "使用说明",
         "cs146s": "在线课程",
         "hide": "隐藏",
-        "launch": "启动",
+        "launch": "开始编程",
+        "project": "项目",
         "projectDir": "项目目录",
         "change": "更改",
         "yoloMode": "Yolo 模式",
@@ -143,7 +145,8 @@ const translations: any = {
         "manual": "使用說明",
         "cs146s": "線上課程",
         "hide": "隱藏",
-        "launch": "啟動",
+        "launch": "開始編程",
+        "project": "專案",
         "projectDir": "專案目錄",
         "change": "變更",
         "yoloMode": "Yolo 模式",
@@ -682,7 +685,7 @@ function App() {
                     <span className="sidebar-icon">♊</span> Gemini
                 </div>
                 <div className={`sidebar-item ${navTab === 'codex' ? 'active' : ''}`} onClick={() => switchTool('codex')}>
-                    <span className="sidebar-icon">💻</span> Codex
+                    <span className="sidebar-icon">💻</span> CodeX
                 </div>
                 <div style={{height: '20px'}}></div>
                 <div className={`sidebar-item ${navTab === 'projects' ? 'active' : ''}`} onClick={() => switchTool('projects')}>
@@ -832,6 +835,10 @@ function App() {
                                 </select>
                             </div>
 
+                            <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+                                <button className="btn-link" onClick={() => BrowserOpenURL("https://www.bilibili.com/video/BV1Pt421D7fz")}>{t("manual")}</button>
+                                <button className="btn-link" onClick={() => BrowserOpenURL("https://cs146.com")}>{t("cs146s")}</button>
+                            </div>
                         </div>
                     )}
 
@@ -849,16 +856,25 @@ function App() {
                             <div style={{fontSize: '0.9rem', color: '#6b7280', marginBottom: '30px'}}>{t("author")}: Dr. Daniel</div>
                             
                             <div style={{display: 'flex', gap: '15px'}}>
-                                <button 
-                                    className="btn-primary" 
+                                <button
+                                    className="btn-primary"
                                     onClick={() => {
                                         setStatus(t("checkingUpdate"));
                                         CheckUpdate(APP_VERSION).then(res => {
+                                            console.log("CheckUpdate result:", res);
                                             setUpdateResult(res);
                                             setShowUpdateModal(true);
                                             setStatus("");
                                         }).catch(err => {
-                                            setStatus("Error checking updates: " + err);
+                                            console.error("CheckUpdate error:", err);
+                                            setStatus("检查更新失败: " + err);
+                                            // 显示一个错误结果
+                                            setUpdateResult({
+                                                has_update: false,
+                                                latest_version: "获取失败",
+                                                release_url: ""
+                                            });
+                                            setShowUpdateModal(true);
                                         });
                                     }}
                                 >
@@ -918,7 +934,7 @@ function App() {
                             </div>
                             <div style={{display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center'}}>
                                 <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                    <span style={{fontSize: '0.8rem', color: '#6b7280'}}>项目:</span>
+                                    <span style={{fontSize: '0.8rem', color: '#6b7280'}}>{t("project")}:</span>
                                     <select
                                         value={selectedProjectForLaunch}
                                         onChange={(e) => setSelectedProjectForLaunch(e.target.value)}
@@ -963,7 +979,7 @@ function App() {
                                         e.currentTarget.style.color = '#6b7280';
                                     }}
                                 >
-                                    项目管理
+                                    {t("manageProjects")}
                                 </button>
                                 <button
                                     className="btn-launch"
@@ -981,7 +997,7 @@ function App() {
                                         }
                                     }}
                                 >
-                                    开始编程
+                                    {t("launch")}
                                 </button>
                             </div>
                         </div>
@@ -1012,15 +1028,27 @@ function App() {
                 <div className="modal-overlay">
                     <div className="modal-content" style={{width: '400px', textAlign: 'left'}}>
                         <h3>{t("foundNewVersion")}</h3>
-                        {updateResult.HasUpdate ? (
+                        {updateResult.has_update ? (
                             <>
-                                <p>{t("updateAvailable")} {updateResult.LatestVersion}</p>
-                                <a href={updateResult.ReleaseUrl} target="_blank" rel="noopener noreferrer" style={{color: '#60a5fa', cursor: 'pointer', fontSize: '0.9rem', display: 'inline-block', marginTop: '10px'}}>
+                                <div style={{backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '6px', marginBottom: '15px', border: '1px solid #e0f2fe'}}>
+                                    <div style={{fontSize: '0.85rem', color: '#6b7280', marginBottom: '8px'}}>当前版本</div>
+                                    <div style={{fontSize: '1rem', fontWeight: '600', color: '#1e40af', marginBottom: '12px'}}>v{APP_VERSION}</div>
+                                    <div style={{fontSize: '0.85rem', color: '#6b7280', marginBottom: '8px'}}>最新版本</div>
+                                    <div style={{fontSize: '1rem', fontWeight: '600', color: '#059669'}}>{updateResult.latest_version}</div>
+                                </div>
+                                <p style={{margin: '10px 0', fontSize: '0.9rem', color: '#374151'}}>发现新版本，是否立即下载？</p>
+                                <a href={updateResult.release_url} target="_blank" rel="noopener noreferrer" style={{color: '#60a5fa', cursor: 'pointer', fontSize: '0.9rem', display: 'inline-block', marginTop: '10px'}}>
                                     {t("downloadNow")}
                                 </a>
                             </>
                         ) : (
-                            <p>{t("noUpdate")}</p>
+                            <div style={{backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '6px', border: '1px solid #e0f2fe'}}>
+                                <div style={{fontSize: '0.85rem', color: '#6b7280', marginBottom: '8px'}}>当前版本</div>
+                                <div style={{fontSize: '1rem', fontWeight: '600', color: '#1e40af', marginBottom: '12px'}}>v{APP_VERSION}</div>
+                                <div style={{fontSize: '0.85rem', color: '#6b7280', marginBottom: '8px'}}>最新版本</div>
+                                <div style={{fontSize: '1rem', fontWeight: '600', color: '#059669', marginBottom: '12px'}}>{updateResult.latest_version}</div>
+                                <p style={{margin: '0', fontSize: '0.9rem', color: '#059669', fontWeight: '500'}}>✓ 已是最新版本</p>
+                            </div>
                         )}
                         <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px'}}>
                             <button className="btn-primary" onClick={() => setShowUpdateModal(false)}>{t("close")}</button>
@@ -1031,7 +1059,7 @@ function App() {
 
             {showModelSettings && config && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{width: '500px', textAlign: 'left'}}>
+                    <div className="modal-content" style={{width: '575px', textAlign: 'left'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
                             <h3 style={{margin: 0, color: '#60a5fa'}}>{t("modelSettings")}</h3>
                             <button className="modal-close" onClick={() => setShowModelSettings(false)}>&times;</button>
