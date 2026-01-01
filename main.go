@@ -26,7 +26,7 @@ func main() {
 	appOptions := &options.App{
 		Title:     "AICoder",
 		Frameless: true,
-		Width:     554,
+		Width:     510,
 		Height:    200,
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: "aicoder-lock",

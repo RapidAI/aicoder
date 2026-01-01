@@ -157,12 +157,12 @@ body {
 .tabs {
     display: flex;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     gap: 2px;
 }
 
 .tab-button {
-    padding: 8px 16px;
+    padding: 6px 16px;
     cursor: pointer;
     background-color: transparent;
     border: 1px solid transparent;
@@ -205,12 +205,12 @@ body {
 
 /* Form Elements */
 .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .form-label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--text-color);
@@ -218,7 +218,7 @@ body {
 
 .form-input {
     width: 100%;
-    padding: 8px;
+    padding: 6px 8px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 0.9rem;
@@ -238,7 +238,7 @@ body {
     font-size: 0.9rem;
     color: var(--text-secondary);
     background-color: var(--accent-bg);
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-radius: 6px;
     border: 1px solid rgba(59, 130, 246, 0.1);
 }
@@ -247,7 +247,7 @@ body {
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
-    padding: 8px 16px;
+    padding: 6px 16px;
     border: none;
     border-radius: 6px;
     font-size: 0.95rem;
@@ -266,7 +266,7 @@ body {
     background-color: transparent;
     color: var(--primary-color);
     border: 1px solid var(--primary-color);
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-radius: 6px;
     font-size: 0.9rem;
     font-weight: 600;
@@ -286,7 +286,7 @@ body {
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     font-size: 0.8rem;
-    padding: 4px 12px;
+    padding: 3px 12px;
     border-radius: 15px;
     transition: all 0.2s;
     font-weight: 500;
@@ -303,7 +303,7 @@ body {
     border: 1px solid #24292f;
     color: #24292f;
     font-size: 0.75rem;
-    padding: 3px 10px;
+    padding: 2px 10px;
     border-radius: 12px;
     transition: all 0.2s;
     font-weight: 500;
@@ -323,13 +323,13 @@ body {
 .model-switcher {
     display: flex;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     padding: 0 2px; /* Visual balance */
 }
 
 .model-btn {
     flex: 1;
-    padding: 7.68px 10px;
+    padding: 6px 10px;
     border: 1px solid var(--border-color);
     background-color: var(--surface-color);
     color: var(--text-secondary);
@@ -360,7 +360,7 @@ body {
 .btn-launch {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
-    padding: 10px 30px;
+    padding: 8px 30px;
     border: none;
     border-radius: 8px;
     font-size: 0.95rem;
@@ -431,4 +431,17 @@ body {
 
 .modal-close:hover {
     color: #374151;
+}
+
+.context-menu-item {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: #f1f5f9;
+    color: var(--primary-color);
 }

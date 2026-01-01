@@ -5,10 +5,19 @@ APP_NAME="AICoder"
 # Read version from build_number if exists, else default
 if [ -f "build_number" ]; then
     BUILD_NUM=$(cat build_number)
+    BUILD_NUM=$((BUILD_NUM + 1))
+    echo $BUILD_NUM > build_number
     VERSION="2.0.0.${BUILD_NUM}"
 else
+    BUILD_NUM=1
+    echo $BUILD_NUM > build_number
     VERSION="2.0.0.1"
 fi
+
+# Sync version to frontend
+echo "Syncing version $VERSION to frontend..."
+sed -i '' "s/const APP_VERSION = \".*\";/const APP_VERSION = \"$VERSION\";/" frontend/src/App.tsx
+echo "export const buildNumber = \"$BUILD_NUM\";" > frontend/src/version.ts
 
 IDENTIFIER="com.wails.AICoder"
 OUTPUT_DIR="dist"

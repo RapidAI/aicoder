@@ -14,6 +14,10 @@ export function CheckUpdate(arg1) {
   return window['go']['main']['App']['CheckUpdate'](arg1);
 }
 
+export function ClipboardGetText() {
+  return window['go']['main']['App']['ClipboardGetText']();
+}
+
 export function GetCurrentProjectPath() {
   return window['go']['main']['App']['GetCurrentProjectPath']();
 }

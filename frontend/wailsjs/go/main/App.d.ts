@@ -8,6 +8,8 @@ export function CheckToolsStatus():Promise<Array<main.ToolStatus>>;
 
 export function CheckUpdate(arg1:string):Promise<main.UpdateResult>;
 
+export function ClipboardGetText():Promise<string>;
+
 export function GetCurrentProjectPath():Promise<string>;
 
 export function GetUserHomeDir():Promise<string>;

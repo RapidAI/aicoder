@@ -2,8 +2,8 @@ import {useEffect, useState, useRef} from 'react';
 import './App.css';
 import {buildNumber} from './version';
 import appIcon from './assets/images/appicon.png';
-import {CheckToolsStatus, InstallTool, LoadConfig, SaveConfig, CheckEnvironment, ResizeWindow, LaunchTool, SelectProjectDir, SetLanguage, GetUserHomeDir, CheckUpdate, ShowMessage, ReadBBS} from "../wailsjs/go/main/App";
-import {WindowHide, EventsOn, EventsOff, BrowserOpenURL, ClipboardGetText, Quit} from "../wailsjs/runtime";
+import {CheckToolsStatus, InstallTool, LoadConfig, SaveConfig, CheckEnvironment, ResizeWindow, LaunchTool, SelectProjectDir, SetLanguage, GetUserHomeDir, CheckUpdate, ShowMessage, ReadBBS, ClipboardGetText} from "../wailsjs/go/main/App";
+import {WindowHide, EventsOn, EventsOff, BrowserOpenURL, Quit} from "../wailsjs/runtime";
 import {main} from "../wailsjs/go/models";
 
 const subscriptionUrls: {[key: string]: string} = {
@@ -16,7 +16,7 @@ const subscriptionUrls: {[key: string]: string} = {
     "aicodemirror": "https://www.aicodemirror.com/register?invitecode=CZPPWZ"
 };
 
-const APP_VERSION = "2.0.0.2";
+const APP_VERSION = "2.0.0.80";
 
 const translations: any = {
     "en": {
@@ -35,7 +35,8 @@ const translations: any = {
         "launchBtn": "Launch Tool",
         "activeModel": "ACTIVE PROVIDER",
         "modelSettings": "PROVIDER SETTINGS",
-        "modelName": "Provider Name",
+        "providerName": "Provider Name",
+        "modelName": "Model ID",
         "apiKey": "API Key",
         "getKey": "Get API Key",
         "enterKey": "Enter API Key",
@@ -76,9 +77,14 @@ const translations: any = {
         "author": "Author",
         "checkingUpdate": "Checking for updates...",
         "bugReport": "Bug Report or Suggestion",
+        "businessCooperation": "Business: WeChat znsoft",
         "original": "Original",
         "message": "Message",
-        "danger": "DANGER"
+        "danger": "DANGER",
+        "selectAll": "Select All",
+        "copy": "Copy",
+        "cut": "Cut",
+        "contextPaste": "Paste"
     },
     "zh-Hans": {
         "title": "AICoder",
@@ -96,7 +102,8 @@ const translations: any = {
         "launchBtn": "启动工具",
         "activeModel": "服务商选择",
         "modelSettings": "服务商设置",
-        "modelName": "服务商名称",
+        "providerName": "服务商名称",
+        "modelName": "模型名称/ID",
         "apiKey": "API 密钥",
         "getKey": "获取API密钥",
         "enterKey": "输入 API Key",
@@ -137,9 +144,14 @@ const translations: any = {
         "author": "作者",
         "checkingUpdate": "正在检查更新...",
         "bugReport": "Bug 报告或建议",
+        "businessCooperation": "商业合作：微信 znsoft",
         "original": "原厂",
         "message": "消息",
-        "danger": "危险"
+        "danger": "危险",
+        "selectAll": "全选",
+        "copy": "复制",
+        "cut": "剪切",
+        "contextPaste": "粘贴"
     },
     "zh-Hant": {
         "title": "AICoder",
@@ -157,7 +169,8 @@ const translations: any = {
         "launchBtn": "啟動工具",
         "activeModel": "服務商選擇",
         "modelSettings": "服務商設定",
-        "modelName": "服務商名稱",
+        "providerName": "服務商名稱",
+        "modelName": "模型名稱/ID",
         "apiKey": "API 金鑰",
         "getKey": "獲取API密鑰",
         "enterKey": "輸入 API Key",
@@ -195,9 +208,14 @@ const translations: any = {
         "version": "版本",
         "author": "作者",
         "checkingUpdate": "正在檢查更新...",
+        "businessCooperation": "商業合作：微信 znsoft",
         "original": "原廠",
         "message": "消息",
-        "danger": "危險"
+        "danger": "危險",
+        "selectAll": "全選",
+        "copy": "複製",
+        "cut": "剪切",
+        "contextPaste": "粘貼"
     }
 };
 
@@ -262,18 +280,119 @@ function App() {
     const [activeTool, setActiveTool] = useState<string>("claude");
     const [status, setStatus] = useState("");
     const [activeTab, setActiveTab] = useState(0);
+    const [tabStartIndex, setTabStartIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // activeTab 0 is Original (hidden), so configurable models start at 1.
+        // We map activeTab to a 0-based index for the configurable list.
+        const localActiveIndex = activeTab > 0 ? activeTab - 1 : 0;
+
+        if (localActiveIndex < tabStartIndex) {
+            setTabStartIndex(localActiveIndex);
+        } else if (localActiveIndex >= tabStartIndex + 5) {
+            setTabStartIndex(localActiveIndex - 4);
+        }
+    }, [activeTab]);
+
+    const [showModelSettings, setShowModelSettings] = useState(false);
+
+    useEffect(() => {
+        if (showModelSettings && activeTab === 0) {
+            setActiveTab(1);
+        }
+    }, [showModelSettings, activeTab]);
+
     const [toolStatuses, setToolStatuses] = useState<any[]>([]);
     const [envLogs, setEnvLogs] = useState<string[]>(["Initializing..."]);
     const [showLogs, setShowLogs] = useState(false);
     const [yoloMode, setYoloMode] = useState(false);
     const [selectedProjectForLaunch, setSelectedProjectForLaunch] = useState<string>("");
     const [showAbout, setShowAbout] = useState(false);
-    const [showModelSettings, setShowModelSettings] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [updateResult, setUpdateResult] = useState<any>(null);
     const [projectOffset, setProjectOffset] = useState(0);
     const [lang, setLang] = useState("en");
+
+    const [contextMenu, setContextMenu] = useState<{x: number, y: number, visible: boolean, target: HTMLInputElement | null}>({
+        x: 0, y: 0, visible: false, target: null
+    });
+
+    const handleContextMenu = (e: React.MouseEvent, target: HTMLInputElement) => {
+        e.preventDefault();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            visible: true,
+            target: target
+        });
+    };
+
+    const closeContextMenu = () => {
+        setContextMenu({...contextMenu, visible: false});
+    };
+
+    useEffect(() => {
+        const handleClick = () => closeContextMenu();
+        window.addEventListener('click', handleClick);
+        return () => window.removeEventListener('click', handleClick);
+    }, [contextMenu]);
+
+    const getClipboardText = async () => {
+        try {
+            const text = await ClipboardGetText();
+            return text || "";
+        } catch (err) {
+            console.error("ClipboardGetText failed:", err);
+            // Browser API fallback if backend fails
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    return await navigator.clipboard.readText();
+                }
+            } catch (e) {}
+            return "";
+        }
+    };
+
+    const handleContextAction = async (action: string) => {
+        const target = contextMenu.target;
+        if (!target) return;
+
+        target.focus();
+        
+        switch (action) {
+            case 'selectAll':
+                target.select();
+                break;
+            case 'copy':
+                document.execCommand('copy');
+                break;
+            case 'cut':
+                document.execCommand('cut');
+                break;
+            case 'paste':
+                const text = await getClipboardText();
+                if (text) {
+                    // Modern approach using setRangeText if supported, or manual
+                    const start = target.selectionStart || 0;
+                    const end = target.selectionEnd || 0;
+                    const val = target.value;
+                    const newVal = val.substring(0, start) + text + val.substring(end);
+                    
+                    // Generic React-compatible input update
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+                    if (nativeInputValueSetter) {
+                        nativeInputValueSetter.call(target, newVal);
+                    } else {
+                        target.value = newVal;
+                    }
+                    const event = new Event('input', { bubbles: true });
+                    target.dispatchEvent(event);
+                }
+                break;
+        }
+        closeContextMenu();
+    };
 
     const logEndRef = useRef<HTMLTextAreaElement>(null);
 
@@ -303,7 +422,7 @@ function App() {
             }
         };
         const doneHandler = () => {
-            ResizeWindow(760, 440);
+            ResizeWindow(700, 440);
             setIsLoading(false);
         };
 
@@ -432,17 +551,19 @@ function App() {
         setConfig(newConfig);
     };
 
-    const handleModelNameChange = (newName: string) => {
+    const handleModelNameChange = (name: string) => {
         if (!config) return;
         const toolCfg = JSON.parse(JSON.stringify((config as any)[activeTool]));
-        const isRenamingActive = toolCfg.current_model === toolCfg.models[activeTab].model_name;
-        toolCfg.models[activeTab].model_name = newName;
-        if (isRenamingActive) toolCfg.current_model = newName;
-        
-        const newConfig = new main.AppConfig({
-            ...config, 
-            [activeTool]: toolCfg
-        });
+        toolCfg.models[activeTab].model_name = name;
+        const newConfig = new main.AppConfig({...config, [activeTool]: toolCfg});
+        setConfig(newConfig);
+    };
+
+    const handleModelIdChange = (id: string) => {
+        if (!config) return;
+        const toolCfg = JSON.parse(JSON.stringify((config as any)[activeTool]));
+        toolCfg.models[activeTab].model_id = id;
+        const newConfig = new main.AppConfig({...config, [activeTool]: toolCfg});
         setConfig(newConfig);
     };
 
@@ -804,21 +925,19 @@ function App() {
                                         alignItems: 'center',
                                         gap: '10px'
                                     }}>
-                                        <input 
-                                            type="text" 
-                                            className="form-input" 
-                                            value={proj.name}
-                                            onChange={(e) => {
-                                                const newList = config.projects.map((p: any) => p.id === proj.id ? {...p, name: e.target.value} : p);
-                                                setConfig(new main.AppConfig({...config, projects: newList}));
-                                            }}
-                                            onBlur={() => {
-                                                if (config) SaveConfig(config);
-                                            }}
-                                            style={{fontWeight: 'bold', border: 'none', padding: 0, fontSize: '1rem', width: '120px', flexShrink: 0}}
-                                        />
-                                        
-                                        <div style={{flex: 1, fontSize: '0.85rem', color: '#6b7280', backgroundColor: '#f9fafb', padding: '6px', borderRadius: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                                                                                                                                <input
+                                                                                                                                    type="text"
+                                                                                                                                    className="form-input"
+                                                                                                                                    data-field="project-item-name"
+                                                                                                                                    data-id={proj.id}
+                                                                                                                                    value={proj.name}
+                                                                                                                                    onChange={(e) => {
+                                                                                                                                        const newList = config.projects.map((p: any) => p.id === proj.id ? {...p, name: e.target.value} : p);
+                                                                                                                                        setConfig(new main.AppConfig({...config, projects: newList}));
+                                                                                                                                    }}
+                                                                                                                                    onContextMenu={(e) => handleContextMenu(e, e.currentTarget)}
+                                                                                                                                    style={{fontWeight: 'bold', border: 'none', padding: 0, fontSize: '1rem', width: '120px', flexShrink: 0}}
+                                                                                                                                />                                        <div style={{flex: 1, fontSize: '0.85rem', color: '#6b7280', backgroundColor: '#f9fafb', padding: '6px', borderRadius: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                                             {proj.path}
                                         </div>
 
@@ -881,9 +1000,11 @@ function App() {
                             boxSizing: 'border-box'
                         }}>
                             <img src={appIcon} alt="Logo" style={{width: '64px', height: '64px', marginBottom: '15px'}} />
-                            <h2 style={{color: '#60a5fa', margin: '0 0 8px 0'}}>RapidAI AICoder (2026 New Year)</h2>
-                            <div style={{fontSize: '1rem', color: '#374151', marginBottom: '5px'}}>{t("version")} {APP_VERSION}</div>
-                            <div style={{fontSize: '0.9rem', color: '#6b7280', marginBottom: '20px'}}>{t("author")}: Dr. Daniel</div>
+                                                    <h2 style={{color: '#60a5fa', margin: '0 0 4px 0'}}>RapidAI AICoder</h2>
+                                                    <div style={{fontSize: '0.9rem', color: '#94a3b8', marginBottom: '12px'}}>(2026 New Year)</div>
+                                                    <div style={{fontSize: '1rem', color: '#374151', marginBottom: '5px'}}>{t("version")} {APP_VERSION}</div>
+                                                    <div style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '5px'}}>{t("businessCooperation")}</div>
+                                                    <div style={{fontSize: '0.9rem', color: '#6b7280', marginBottom: '20px'}}>{t("author")}: Dr. Daniel</div>
                             
                             <div style={{display: 'flex', gap: '15px'}}>
                                 <button
@@ -1089,39 +1210,95 @@ function App() {
 
             {showModelSettings && config && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{width: '575px', textAlign: 'left'}}>
+                    <div className="modal-content" style={{width: '529px', textAlign: 'left'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
                             <h3 style={{margin: 0, color: '#60a5fa'}}>{t("modelSettings")}</h3>
                             <button className="modal-close" onClick={() => setShowModelSettings(false)}>&times;</button>
                         </div>
 
-                        <div className="tabs" style={{marginBottom: '20px'}}>
-                            {(config as any)[activeTool].models.map((model: any, index: number) => (
-                                <button
-                                    key={index}
-                                    className={`tab-button ${activeTab === index ? 'active' : ''}`}
-                                    onClick={() => setActiveTab(index)}
-                                >
-                                    {model.model_name === "Original" ? t("original") : model.model_name}
-                                </button>
-                            ))}
+                        <div style={{marginBottom: '16px'}}>
+                            {(() => {
+                                const allModels = (config as any)[activeTool].models;
+                                const configurableModels = allModels.filter((m: any) => m.model_name !== "Original");
+                                return (
+                                    <div className="tabs" style={{alignItems: 'center', minHeight: '40px'}}>
+                                        <div style={{width: '30px', display: 'flex', justifyContent: 'center', flexShrink: 0}}>
+                                            {tabStartIndex > 0 && (
+                                                <button
+                                                    onClick={() => setTabStartIndex(Math.max(0, tabStartIndex - 1))}
+                                                    style={{
+                                                        border: 'none', background: 'transparent', cursor: 'pointer', 
+                                                        padding: '6px 4px', color: '#64748b', fontSize: '1rem'
+                                                    }}
+                                                >
+                                                    ◀
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div style={{flex: 1, display: 'flex', gap: '2px', overflow: 'hidden'}}>
+                                            {configurableModels.slice(tabStartIndex, tabStartIndex + 5).map((model: any, index: number) => {
+                                                const globalIndex = allModels.findIndex((m: any) => m.model_name === model.model_name);
+                                                return (
+                                                    <button
+                                                        key={globalIndex}
+                                                        className={`tab-button ${activeTab === globalIndex ? 'active' : ''}`}
+                                                        onClick={() => setActiveTab(globalIndex)}
+                                                        style={{overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0}}
+                                                    >
+                                                        {model.model_name}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div style={{width: '30px', display: 'flex', justifyContent: 'center', flexShrink: 0}}>
+                                            {tabStartIndex + 5 < configurableModels.length && (
+                                                <button
+                                                    onClick={() => setTabStartIndex(Math.min(configurableModels.length - 5, tabStartIndex + 1))}
+                                                    style={{
+                                                        border: 'none', background: 'transparent', cursor: 'pointer', 
+                                                        padding: '6px 4px', color: '#64748b', fontSize: '1rem'
+                                                    }}
+                                                >
+                                                    ▶
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         {(config as any)[activeTool].models[activeTab].is_custom && (
                             <div className="form-group">
-                                <label className="form-label">{t("modelName")}</label>
+                                <label className="form-label">{t("providerName")}</label>
                                 <input 
                                     type="text" 
                                     className="form-input"
+                                    data-field="model-name"
                                     value={(config as any)[activeTool].models[activeTab].model_name} 
                                     onChange={(e) => handleModelNameChange(e.target.value)}
+                                    onContextMenu={(e) => handleContextMenu(e, e.currentTarget)}
                                     placeholder={t("customProviderPlaceholder")}
                                 />
                             </div>
                         )}
-
+                                                            
                         {(config as any)[activeTool].models[activeTab].model_name !== "Original" && (
                             <>
+                                <div className="form-group">
+                                    <label className="form-label">{t("modelName")}</label>
+                                    <input 
+                                        type="text" 
+                                        className="form-input"
+                                        data-field="model-id"
+                                        value={(config as any)[activeTool].models[activeTab].model_id} 
+                                        onChange={(e) => handleModelIdChange(e.target.value)}
+                                        onContextMenu={(e) => handleContextMenu(e, e.currentTarget)}
+                                        placeholder="e.g. claude-3-5-sonnet-20241022"
+                                    />
+                                </div>
                                 <div className="form-group">
                                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
                                         <label className="form-label" style={{margin: 0}}>{t("apiKey")}</label>
@@ -1135,39 +1312,58 @@ function App() {
                                             </button>
                                         )}
                                     </div>
-                                    <div style={{display: 'flex', gap: '10px'}}>
-                                        <input 
-                                            type="password" 
-                                            className="form-input"
-                                            value={(config as any)[activeTool].models[activeTab].api_key} 
-                                            onChange={(e) => handleApiKeyChange(e.target.value)}
-                                            placeholder={t("enterKey")}
-                                        />
-                                        <button className="btn-subscribe" onClick={async () => {
-                                            const text = await ClipboardGetText();
-                                            if (text) handleApiKeyChange(text);
-                                        }}>{t("paste")}</button>
-                                    </div>
+                                    <input 
+                                        type="password" 
+                                        className="form-input"
+                                        data-field="api-key"
+                                        value={(config as any)[activeTool].models[activeTab].api_key} 
+                                        onChange={(e) => handleApiKeyChange(e.target.value)}
+                                        onContextMenu={(e) => handleContextMenu(e, e.currentTarget)}
+                                        placeholder={t("enterKey")}
+                                    />
                                 </div>
-
+                                                            
                                 <div className="form-group">
                                     <label className="form-label">{t("apiEndpoint")}</label>
                                     <input 
                                         type="text" 
                                         className="form-input"
+                                        data-field="api-url"
                                         value={(config as any)[activeTool].models[activeTab].model_url} 
                                         onChange={(e) => handleModelUrlChange(e.target.value)}
+                                        onContextMenu={(e) => handleContextMenu(e, e.currentTarget)}
                                         placeholder="https://api.example.com/v1"
                                     />
                                 </div>
                             </>
                         )}
 
-                        <div style={{display: 'flex', gap: '10px', marginTop: '30px'}}>
+                        <div style={{display: 'flex', gap: '10px', marginTop: '24px'}}>
                             <button className="btn-primary" style={{flex: 1}} onClick={save}>{t("saveChanges")}</button>
                             <button className="btn-hide" style={{flex: 1}} onClick={() => setShowModelSettings(false)}>{t("close")}</button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {contextMenu.visible && (
+                <div style={{
+                    position: 'fixed',
+                    top: contextMenu.y,
+                    left: contextMenu.x,
+                    backgroundColor: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    zIndex: 3000,
+                    padding: '5px 0',
+                    minWidth: '120px'
+                }}>
+                    <div className="context-menu-item" onClick={() => handleContextAction('selectAll')}>{t("selectAll")}</div>
+                    <div style={{height: '1px', backgroundColor: '#f1f5f9', margin: '4px 0'}}></div>
+                    <div className="context-menu-item" onClick={() => handleContextAction('copy')}>{t("copy")}</div>
+                    <div className="context-menu-item" onClick={() => handleContextAction('cut')}>{t("cut")}</div>
+                    <div className="context-menu-item" onClick={() => handleContextAction('paste')}>{t("contextPaste")}</div>
                 </div>
             )}
         </div>

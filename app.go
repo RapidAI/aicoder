@@ -30,6 +30,7 @@ var UpdateTrayMenu func(string)
 
 type ModelConfig struct {
 	ModelName string `json:"model_name"`
+	ModelId   string `json:"model_id"`
 	ModelUrl  string `json:"model_url"`
 	ApiKey    string `json:"api_key"`
 	IsCustom  bool   `json:"is_custom"`
@@ -271,38 +272,35 @@ func (a *App) syncToClaudeSettings(config AppConfig) error {
 	switch strings.ToLower(selectedModel.ModelName) {
 	case "kimi":
 		env["ANTHROPIC_BASE_URL"] = "https://api.kimi.com/coding"
-		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "kimi-k2-thinking"
-		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "kimi-k2-thinking"
-		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "kimi-k2-thinking"
-		env["ANTHROPIC_MODEL"] = "kimi-k2-thinking"
+		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_MODEL"] = selectedModel.ModelId
 	case "glm", "glm-4.7":
 		env["ANTHROPIC_BASE_URL"] = "https://open.bigmodel.cn/api/anthropic"
-		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "glm-4.7"
-		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "glm-4.7"
-		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "glm-4.7"
-		env["ANTHROPIC_MODEL"] = "glm-4.7"
+		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_MODEL"] = selectedModel.ModelId
 		settings["permissions"] = map[string]string{"defaultMode": "dontAsk"}
 	case "doubao":
 		env["ANTHROPIC_BASE_URL"] = "https://ark.cn-beijing.volces.com/api/coding"
-		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "doubao-seed-code-preview-latest"
-		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "doubao-seed-code-preview-latest"
-		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "doubao-seed-code-preview-latest"
-		env["ANTHROPIC_MODEL"] = "doubao-seed-code-preview-latest"
+		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_MODEL"] = selectedModel.ModelId
 	case "minimax":
 		env["ANTHROPIC_BASE_URL"] = "https://api.minimaxi.com/anthropic"
-		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "MiniMax-M2.1"
-		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "MiniMax-M2.1"
-		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "MiniMax-M2.1"
-		env["ANTHROPIC_MODEL"] = "MiniMax-M2.1"
-		env["ANTHROPIC_SMALL_FAST_MODEL"] = "MiniMax-M2.1"
+		env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_MODEL"] = selectedModel.ModelId
+		env["ANTHROPIC_SMALL_FAST_MODEL"] = selectedModel.ModelId
 		env["API_TIMEOUT_MS"] = "3000000"
 		env["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1"
-	case "aicodemirror", "aicodemirror-claude":
-		env["ANTHROPIC_BASE_URL"] = selectedModel.ModelUrl
-		env["ANTHROPIC_MODEL"] = "Haiku"
 	default:
 		env["ANTHROPIC_BASE_URL"] = selectedModel.ModelUrl
-		env["ANTHROPIC_MODEL"] = selectedModel.ModelName
+		env["ANTHROPIC_MODEL"] = selectedModel.ModelId
 	}
 
 	settings["env"] = env
@@ -410,7 +408,7 @@ writeConfigToml:
 	}
 
 	configToml := fmt.Sprintf(`model_provider = "aicodemirror"
-model = "gpt-5.2-codex"
+model = "%s"
 model_reasoning_effort = "xhigh"
 disable_response_storage = true
 preferred_auth_method = "apikey"
@@ -419,7 +417,7 @@ preferred_auth_method = "apikey"
 name = "aicodemirror"
 base_url = "%s"
 wire_api = "responses"
-`, baseUrl)
+`, selectedModel.ModelId, baseUrl)
 
 	configBytes := []byte(configToml)
 
@@ -566,6 +564,21 @@ func (a *App) LaunchTool(toolName string, yoloMode bool, projectDir string) {
 			os.Setenv(envBaseUrl, selectedModel.ModelUrl)
 			env[envBaseUrl] = selectedModel.ModelUrl
 		}
+		
+		// Set generic model name env var if applicable
+		if selectedModel.ModelId != "" {
+			switch strings.ToLower(toolName) {
+			case "claude":
+				os.Setenv("ANTHROPIC_MODEL", selectedModel.ModelId)
+				env["ANTHROPIC_MODEL"] = selectedModel.ModelId
+			case "gemini":
+				os.Setenv("GOOGLE_GEMINI_MODEL", selectedModel.ModelId)
+				env["GOOGLE_GEMINI_MODEL"] = selectedModel.ModelId
+			case "codex":
+				os.Setenv("OPENAI_MODEL", selectedModel.ModelId)
+				env["OPENAI_MODEL"] = selectedModel.ModelId
+			}
+		}
 
 		// Tool-specific configurations
 		switch strings.ToLower(toolName) {
@@ -638,23 +651,23 @@ func (a *App) LoadConfig() (AppConfig, error) {
 
 	// Helper for default models
 	defaultClaudeModels := []ModelConfig{
-		{ModelName: "Original", ModelUrl: "", ApiKey: ""},
-		{ModelName: "GLM", ModelUrl: "https://open.bigmodel.cn/api/anthropic", ApiKey: ""},
-		{ModelName: "kimi", ModelUrl: "https://api.kimi.com/coding", ApiKey: ""},
-		{ModelName: "doubao", ModelUrl: "https://ark.cn-beijing.volces.com/api/coding", ApiKey: ""},
-		{ModelName: "MiniMax", ModelUrl: "https://api.minimaxi.com/anthropic", ApiKey: ""},
-		{ModelName: "AICodeMirror", ModelUrl: "https://api.aicodemirror.com/api/claudecode", ApiKey: ""},
-		{ModelName: "Custom", ModelUrl: "", ApiKey: "", IsCustom: true},
+		{ModelName: "Original", ModelId: "", ModelUrl: "", ApiKey: ""},
+		{ModelName: "GLM", ModelId: "glm-4.7", ModelUrl: "https://open.bigmodel.cn/api/anthropic", ApiKey: ""},
+		{ModelName: "kimi", ModelId: "kimi-k2-thinking", ModelUrl: "https://api.kimi.com/coding", ApiKey: ""},
+		{ModelName: "doubao", ModelId: "doubao-seed-code-preview-latest", ModelUrl: "https://ark.cn-beijing.volces.com/api/coding", ApiKey: ""},
+		{ModelName: "MiniMax", ModelId: "MiniMax-M2.1", ModelUrl: "https://api.minimaxi.com/anthropic", ApiKey: ""},
+		{ModelName: "AICodeMirror", ModelId: "Haiku", ModelUrl: "https://api.aicodemirror.com/api/claudecode", ApiKey: ""},
+		{ModelName: "Custom", ModelId: "", ModelUrl: "", ApiKey: "", IsCustom: true},
 	}
 	defaultGeminiModels := []ModelConfig{
-		{ModelName: "Original", ModelUrl: "", ApiKey: ""},
-		{ModelName: "AiCodeMirror", ModelUrl: "https://api.aicodemirror.com/api/gemini", ApiKey: ""},
-		{ModelName: "Custom", ModelUrl: "", ApiKey: "", IsCustom: true},
+		{ModelName: "Original", ModelId: "", ModelUrl: "", ApiKey: ""},
+		{ModelName: "AiCodeMirror", ModelId: "gemini-2.0-flash-exp", ModelUrl: "https://api.aicodemirror.com/api/gemini", ApiKey: ""},
+		{ModelName: "Custom", ModelId: "", ModelUrl: "", ApiKey: "", IsCustom: true},
 	}
 	defaultCodexModels := []ModelConfig{
-		{ModelName: "Original", ModelUrl: "", ApiKey: ""},
-		{ModelName: "AiCodeMirror", ModelUrl: "https://api.aicodemirror.com/api/codex/backend-api/codex", ApiKey: ""},
-		{ModelName: "Custom", ModelUrl: "", ApiKey: "", IsCustom: true},
+		{ModelName: "Original", ModelId: "", ModelUrl: "", ApiKey: ""},
+		{ModelName: "AiCodeMirror", ModelId: "gpt-5.2-codex", ModelUrl: "https://api.aicodemirror.com/api/codex/backend-api/codex", ApiKey: ""},
+		{ModelName: "Custom", ModelId: "", ModelUrl: "", ApiKey: "", IsCustom: true},
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -1078,6 +1091,26 @@ func (a *App) ShowMessage(title, message string) {
 		Title:   title,
 		Message: message,
 	})
+}
+
+func (a *App) ClipboardGetText() (string, error) {
+	// Try Wails runtime first
+	if a.ctx != nil {
+		text, err := runtime.ClipboardGetText(a.ctx)
+		if err == nil && text != "" {
+			return text, nil
+		}
+	}
+
+	// Fallback for macOS: use pbpaste command
+	cmd := exec.Command("pbpaste")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err == nil {
+		return out.String(), nil
+	}
+
+	return "", nil
 }
 
 func (a *App) ReadBBS() (string, error) {
