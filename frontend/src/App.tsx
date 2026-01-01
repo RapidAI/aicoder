@@ -16,7 +16,7 @@ const subscriptionUrls: {[key: string]: string} = {
     "aicodemirror": "https://www.aicodemirror.com/register?invitecode=CZPPWZ"
 };
 
-const APP_VERSION = "2.0.0.80";
+const APP_VERSION = "2.0.0.81";
 
 const translations: any = {
     "en": {
@@ -76,7 +76,7 @@ const translations: any = {
         "version": "Version",
         "author": "Author",
         "checkingUpdate": "Checking for updates...",
-        "bugReport": "Bug Report or Suggestion",
+        "bugReport": "Problem Feedback",
         "businessCooperation": "Business: WeChat znsoft",
         "original": "Original",
         "message": "Message",
@@ -143,7 +143,7 @@ const translations: any = {
         "version": "版本",
         "author": "作者",
         "checkingUpdate": "正在检查更新...",
-        "bugReport": "Bug 报告或建议",
+        "bugReport": "问题反馈",
         "businessCooperation": "商业合作：微信 znsoft",
         "original": "原厂",
         "message": "消息",
@@ -208,6 +208,7 @@ const translations: any = {
         "version": "版本",
         "author": "作者",
         "checkingUpdate": "正在檢查更新...",
+        "bugReport": "問題回饋",
         "businessCooperation": "商業合作：微信 znsoft",
         "original": "原廠",
         "message": "消息",
@@ -1031,6 +1032,7 @@ function App() {
                                 >
                                     {t("checkUpdate")}
                                 </button>
+                                <button className="btn-link" onClick={() => BrowserOpenURL("https://github.com/RapidAI/aicoder/issues/new")}>{t("bugReport")}</button>
                                 <button className="btn-link" onClick={() => BrowserOpenURL("https://github.com/RapidAI/aicoder")}>GitHub</button>
                             </div>
                         </div>
