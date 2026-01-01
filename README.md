@@ -5,7 +5,7 @@
 AICoder 是一款基于 Wails + Go + React 开发的桌面 AI 编程辅助工具仪表盘。它旨在为多种 AI 命令行工具（Anthropic Claude Code, OpenAI Codex, Google Gemini CLI）提供统一的配置管理、环境自动部署以及一键启动功能。
 
 本程序特别针对主流 AI 编程模型进行了深度集成，支持 API Key 的快速配置与自动同步。
-<img width="806" height="526" alt="image" src="https://github.com/user-attachments/assets/c694b8a8-2ee7-46d5-96c0-7ef8fb683258" />
+<img width="806" height="486" alt="image" src="https://github.com/user-attachments/assets/e026df39-a07a-4529-b932-5c3ca37cc659" />
 
 ## 核心功能
 
