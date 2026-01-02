@@ -20,6 +20,7 @@ export namespace main {
 	}
 	export class ModelConfig {
 	    model_name: string;
+	    model_id: string;
 	    model_url: string;
 	    api_key: string;
 	    is_custom: boolean;
@@ -31,6 +32,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.model_name = source["model_name"];
+	        this.model_id = source["model_id"];
 	        this.model_url = source["model_url"];
 	        this.api_key = source["api_key"];
 	        this.is_custom = source["is_custom"];

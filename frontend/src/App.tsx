@@ -5,6 +5,9 @@ import appIcon from './assets/images/appicon.png';
 import {CheckToolsStatus, InstallTool, LoadConfig, SaveConfig, CheckEnvironment, ResizeWindow, LaunchTool, SelectProjectDir, SetLanguage, GetUserHomeDir, CheckUpdate, ShowMessage, ReadBBS, ClipboardGetText} from "../wailsjs/go/main/App";
 import {WindowHide, EventsOn, EventsOff, BrowserOpenURL, Quit} from "../wailsjs/runtime";
 import {main} from "../wailsjs/go/models";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 const subscriptionUrls: {[key: string]: string} = {
     "glm": "https://bigmodel.cn/glm-coding",
@@ -16,7 +19,7 @@ const subscriptionUrls: {[key: string]: string} = {
     "aicodemirror": "https://www.aicodemirror.com/register?invitecode=CZPPWZ"
 };
 
-const APP_VERSION = "2.0.0.81";
+const APP_VERSION = "2.0.0.87";
 
 const translations: any = {
     "en": {
@@ -84,7 +87,8 @@ const translations: any = {
         "selectAll": "Select All",
         "copy": "Copy",
         "cut": "Cut",
-        "contextPaste": "Paste"
+        "contextPaste": "Paste",
+        "refreshMessage": "Refresh Message"
     },
     "zh-Hans": {
         "title": "AICoder",
@@ -151,7 +155,8 @@ const translations: any = {
         "selectAll": "全选",
         "copy": "复制",
         "cut": "剪切",
-        "contextPaste": "粘贴"
+        "contextPaste": "粘贴",
+        "refreshMessage": "刷新消息"
     },
     "zh-Hant": {
         "title": "AICoder",
@@ -216,7 +221,8 @@ const translations: any = {
         "selectAll": "全選",
         "copy": "複製",
         "cut": "剪切",
-        "contextPaste": "粘貼"
+        "contextPaste": "粘貼",
+        "refreshMessage": "刷新消息"
     }
 };
 
@@ -278,6 +284,9 @@ function App() {
     const [config, setConfig] = useState<main.AppConfig | null>(null);
     const [navTab, setNavTab] = useState<string>("claude");
     const [bbsContent, setBbsContent] = useState<string>("");
+    const [refreshStatus, setRefreshStatus] = useState<string>("");
+    const [lastUpdateTime, setLastUpdateTime] = useState<string>("");
+    const [refreshKey, setRefreshKey] = useState<number>(0);
     const [activeTool, setActiveTool] = useState<string>("claude");
     const [status, setStatus] = useState("");
     const [activeTab, setActiveTab] = useState(0);
@@ -864,32 +873,89 @@ function App() {
                             overflowY: 'auto',
                             boxSizing: 'border-box'
                         }}>
-                            <div style={{
+                            <div className="markdown-content" style={{
                                 backgroundColor: '#fff',
                                 padding: '20px',
                                 borderRadius: '8px',
                                 border: '1px solid var(--border-color)',
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word',
                                 fontFamily: 'inherit',
                                 lineHeight: '1.6',
                                 color: '#374151',
-                                marginBottom: '20px'
+                                marginBottom: '20px',
+                                textAlign: 'left'
                             }}>
-                                {bbsContent}
+                                {refreshStatus && (
+                                    <div style={{
+                                        padding: '10px',
+                                        marginBottom: '15px',
+                                        backgroundColor: '#e0f2fe',
+                                        borderRadius: '4px',
+                                        color: '#0369a1',
+                                        fontWeight: 'bold',
+                                        textAlign: 'center'
+                                    }}>
+                                        {refreshStatus}
+                                    </div>
+                                )}
+                                {lastUpdateTime && (
+                                    <div style={{
+                                        padding: '8px',
+                                        marginBottom: '10px',
+                                        backgroundColor: '#f0fdf4',
+                                        borderRadius: '4px',
+                                        color: '#15803d',
+                                        fontSize: '0.85rem',
+                                        textAlign: 'right'
+                                    }}>
+                                        最后更新：{lastUpdateTime}
+                                    </div>
+                                )}
+                                <ReactMarkdown
+                                    key={refreshKey}
+                                    remarkPlugins={[remarkGfm]}
+                                    // @ts-ignore - rehype-raw type compatibility
+                                    rehypePlugins={[rehypeRaw]}
+                                >
+                                    {bbsContent}
+                                </ReactMarkdown>
                             </div>
-                            
+
                             <div style={{display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '20px'}}>
+                                <button className="btn-link" onClick={async () => {
+                                    try {
+                                        setRefreshStatus('🔄 正在从服务器获取最新消息...');
+                                        // Clear content first to ensure re-render
+                                        setBbsContent('');
+                                        const startTime = Date.now();
+                                        const content = await ReadBBS();
+                                        const elapsed = Date.now() - startTime;
+
+                                        // 获取内容前50个字符作为摘要
+                                        const preview = content.substring(0, 50).replace(/\n/g, ' ');
+                                        const now = new Date();
+                                        const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+                                        setRefreshStatus(`✅ 刷新成功！用时 ${elapsed}ms | 长度：${content.length} 字符 | 开头：${preview}...`);
+                                        // Set new content and increment key to force re-render
+                                        setBbsContent(content);
+                                        setRefreshKey(prev => prev + 1);
+                                        setLastUpdateTime(timeStr);
+                                        setTimeout(() => setRefreshStatus(''), 5000);
+                                    } catch (err) {
+                                        setRefreshStatus('❌ 刷新失败：' + err);
+                                        setTimeout(() => setRefreshStatus(''), 5000);
+                                    }
+                                }}>{t("refreshMessage")}</button>
                                 <button className="btn-link" onClick={() => {
-                                    const manualUrl = (lang === 'zh-Hans' || lang === 'zh-Hant') 
-                                        ? "https://github.com/RapidAI/aicoder/blob/main/UserManual_CN.md" 
+                                    const manualUrl = (lang === 'zh-Hans' || lang === 'zh-Hant')
+                                        ? "https://github.com/RapidAI/aicoder/blob/main/UserManual_CN.md"
                                         : "https://github.com/RapidAI/aicoder/blob/main/UserManual_EN.md";
                                     BrowserOpenURL(manualUrl);
                                 }}>{t("manual")}</button>
                                 <button className="btn-link" onClick={() => BrowserOpenURL("https://github.com/BIT-ENGD/cs146s_cn")}>{t("cs146s")}</button>
                                 <button className="btn-link" onClick={() => {
-                                    const faqUrl = (lang === 'zh-Hans' || lang === 'zh-Hant') 
-                                        ? "https://github.com/RapidAI/aicoder/blob/main/faq.md" 
+                                    const faqUrl = (lang === 'zh-Hans' || lang === 'zh-Hant')
+                                        ? "https://github.com/RapidAI/aicoder/blob/main/faq.md"
                                         : "https://github.com/RapidAI/aicoder/blob/main/faq_en.md";
                                     BrowserOpenURL(faqUrl);
                                 }}>{t("faq")}</button>

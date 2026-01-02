@@ -445,3 +445,141 @@ body {
     background-color: #f1f5f9;
     color: var(--primary-color);
 }
+
+/* Markdown Content Styles */
+.markdown-content {
+    text-align: left !important;
+}
+
+.markdown-content * {
+    text-align: left !important;
+}
+
+.markdown-content h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    color: #1f2937;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 8px;
+    text-align: left;
+}
+
+.markdown-content h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 18px;
+    margin-bottom: 12px;
+    color: #374151;
+    text-align: left;
+}
+
+.markdown-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 16px;
+    margin-bottom: 10px;
+    color: #4b5563;
+    text-align: left;
+}
+
+.markdown-content p {
+    margin: 10px 0;
+    line-height: 1.7;
+    text-align: left;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin: 10px 0;
+    padding-left: 25px;
+    text-align: left !important;
+    list-style-position: outside;
+}
+
+.markdown-content li {
+    margin: 5px 0;
+    line-height: 1.6;
+    text-align: left !important;
+    padding-left: 0;
+}
+
+.markdown-content li > * {
+    text-align: left !important;
+}
+
+.markdown-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.markdown-content a:hover {
+    border-bottom-color: var(--primary-color);
+}
+
+.markdown-content code {
+    background-color: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #e83e8c;
+}
+
+.markdown-content pre {
+    background-color: #f3f4f6;
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 15px 0;
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+    color: #374151;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid var(--primary-color);
+    margin: 15px 0;
+    padding: 10px 15px;
+    background-color: #f9fafb;
+    color: #6b7280;
+}
+
+.markdown-content img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 15px auto;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 15px 0;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+    border: 1px solid #e5e7eb;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.markdown-content table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+}
+
+.markdown-content hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 20px 0;
+}

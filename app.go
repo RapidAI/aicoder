@@ -1114,20 +1114,38 @@ func (a *App) ClipboardGetText() (string, error) {
 }
 
 func (a *App) ReadBBS() (string, error) {
-	url := "https://raw.githubusercontent.com/RapidAI/cceasy/main/bbs.md"
-	
-	client := &http.Client{
-		Timeout: 10 * time.Second,
+	// Use GitHub API with timestamp to bypass all caches
+	url := fmt.Sprintf("https://api.github.com/repos/RapidAI/aicoder/contents/bbs.md?ref=main&t=%d", time.Now().UnixNano())
+
+	// Create a new transport to avoid connection reuse caching
+	transport := &http.Transport{
+		DisableKeepAlives: true,
+		ForceAttemptHTTP2: false,
 	}
-	
-	resp, err := client.Get(url)
+	client := &http.Client{
+		Timeout:   15 * time.Second,
+		Transport: transport,
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "Failed to create request: " + err.Error(), nil
+	}
+
+	// GitHub API headers - request raw content directly
+	req.Header.Set("Accept", "application/vnd.github.v3.raw")
+	req.Header.Set("User-Agent", "AICoder-App")
+	req.Header.Set("Cache-Control", "no-cache, no-store")
+	req.Header.Set("Pragma", "no-cache")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return "Failed to fetch remote message: " + err.Error(), nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "Remote message unavailable (Status: " + resp.Status + ")", nil
+		return fmt.Sprintf("Remote message unavailable (Status: %d %s)", resp.StatusCode, resp.Status), nil
 	}
 
 	data, err := io.ReadAll(resp.Body)
