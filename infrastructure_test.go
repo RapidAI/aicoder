@@ -600,19 +600,575 @@ func TestSyncToCodexSettings_Original(t *testing.T) {
 
 				
 
-						if newConfig.Gemini.Models[1].ApiKey != "key-common-updated" {
+								if newConfig.Gemini.Models[1].ApiKey != "key-common-updated" {
 
 				
 
-							t.Errorf("Common provider key should sync! Expected 'key-common-updated', got '%s'", newConfig.Gemini.Models[1].ApiKey)
+					
+
+				
+
+									t.Errorf("Common provider key should sync! Expected 'key-common-updated', got '%s'", newConfig.Gemini.Models[1].ApiKey)
+
+				
+
+					
+
+				
+
+								}
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+						func TestDeepSeekConfigGeneration(t *testing.T) {
+
+				
+
+					
+
+				
+
+							// Create a temporary directory for testing
+
+				
+
+					
+
+				
+
+							tmpHome, err := os.MkdirTemp("", "codex-config-test")
+
+				
+
+					
+
+				
+
+							if err != nil {
+
+				
+
+					
+
+				
+
+								t.Fatalf("Failed to create temp dir: %v", err)
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+							defer os.RemoveAll(tmpHome)
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							// Mock home directory
+
+				
+
+					
+
+				
+
+							os.Setenv("HOME", tmpHome)
+
+				
+
+					
+
+				
+
+							if os.Getenv("USERPROFILE") != "" {
+
+				
+
+					
+
+				
+
+								defer os.Setenv("USERPROFILE", os.Getenv("USERPROFILE"))
+
+				
+
+					
+
+				
+
+								os.Setenv("USERPROFILE", tmpHome)
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							app := &App{testHomeDir: tmpHome}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							// Setup config for DeepSeek
+
+				
+
+					
+
+				
+
+							config := AppConfig{
+
+				
+
+					
+
+				
+
+								Codex: ToolConfig{
+
+				
+
+					
+
+				
+
+									CurrentModel: "DeepSeek",
+
+				
+
+					
+
+				
+
+									Models: []ModelConfig{
+
+				
+
+					
+
+				
+
+										{
+
+				
+
+					
+
+				
+
+											ModelName: "DeepSeek",
+
+				
+
+					
+
+				
+
+											ModelId:   "deepseek-coder",
+
+				
+
+					
+
+				
+
+											ModelUrl:  "https://api.deepseek.com",
+
+				
+
+					
+
+				
+
+											ApiKey:    "test-key",
+
+				
+
+					
+
+				
+
+										},
+
+				
+
+					
+
+				
+
+									},
+
+				
+
+					
+
+				
+
+								},
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							// Run sync
+
+				
+
+					
+
+				
+
+							err = app.syncToCodexSettings(config)
+
+				
+
+					
+
+				
+
+							if err != nil {
+
+				
+
+					
+
+				
+
+								t.Fatalf("syncToCodexSettings failed: %v", err)
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							// Check config.toml content
+
+				
+
+					
+
+				
+
+							codexDir := filepath.Join(tmpHome, ".codex")
+
+				
+
+					
+
+				
+
+							configPath := filepath.Join(codexDir, "config.toml")
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							data, err := os.ReadFile(configPath)
+
+				
+
+					
+
+				
+
+							if err != nil {
+
+				
+
+					
+
+				
+
+								t.Fatalf("Failed to read config.toml: %v", err)
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							content := string(data)
+
+				
+
+					
+
+				
+
+							
+
+				
+
+					
+
+				
+
+							// Assertions
+
+				
+
+					
+
+				
+
+							if strings.Contains(content, "[model.limit]") {
+
+				
+
+					
+
+				
+
+								t.Errorf("config.toml should NOT contain '[model.limit]' block")
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							if !strings.Contains(content, "model = \"deepseek-coder\"") {
+
+				
+
+					
+
+				
+
+								t.Errorf("config.toml should contain 'model = \"deepseek-coder\"'")
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+						
+
+				
+
+					
+
+				
+
+							if !strings.Contains(content, "model_provider = \"deepseek\"") {
+
+				
+
+					
+
+				
+
+								t.Errorf("config.toml should contain 'model_provider = \"deepseek\"'")
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
+
+				
+
+							
+
+				
+
+					
+
+				
+
+							// Verify that we didn't accidentally remove too much
+
+				
+
+					
+
+				
+
+							if !strings.Contains(content, "[model_providers.deepseek]") {
+
+				
+
+					
+
+				
+
+								t.Errorf("config.toml should contain '[model_providers.deepseek]'")
+
+				
+
+					
+
+				
+
+							}
+
+				
+
+					
 
 				
 
 						}
-
-				
-
-					}
 
 				
 

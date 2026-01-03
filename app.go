@@ -502,9 +502,6 @@ model_reasoning_effort = "xhigh"
 disable_response_storage = true
 preferred_auth_method = "apikey"
 
-[model.limit]
-output = 8192
-
 [model_providers.deepseek]
 name = "deepseek"
 base_url = "%s"
