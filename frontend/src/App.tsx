@@ -22,7 +22,7 @@ const subscriptionUrls: {[key: string]: string} = {
     "DeepSeek": "https://platform.deepseek.com/api_keys"
 };
 
-const APP_VERSION = "2.5.0.2055";
+const APP_VERSION = "2.5.0.2056";
 
 const translations: any = {
     "en": {
